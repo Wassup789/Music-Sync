@@ -1,0 +1,106 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <android.support.v7.widget.CardView
+        android:id="@+id/cardview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_margin="8dp"
+        card_view:cardBackgroundColor="@android:color/white">
+
+        <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+            android:layout_height="match_parent" android:paddingLeft="@dimen/activity_horizontal_margin"
+            android:paddingRight="@dimen/activity_horizontal_margin"
+            android:paddingTop="@dimen/activity_vertical_margin"
+            android:paddingBottom="@dimen/activity_vertical_margin" tools:context=".MainActivity">
+
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceLarge"
+                    android:text="@string/statistics_status_label"
+                    android:id="@+id/statStatusLabel"
+                    android:layout_row="0"
+                    android:layout_column="0"
+                    android:layout_marginRight="5dp"
+                    android:layout_marginBottom="5dp" />
+
+                <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textAppearance="?android:attr/textAppearanceMedium"
+                            android:text="Sleeping"
+                            android:id="@+id/statStatusValue"
+                            android:layout_row="0"
+                            android:layout_column="1"
+                    android:layout_alignParentTop="true"
+                    android:layout_toEndOf="@+id/statStatusLabel"
+                    android:layout_marginTop="4dp" />
+
+                <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textAppearance="?android:attr/textAppearanceLarge"
+                            android:text="@string/statistics_download_label"
+                            android:id="@+id/filesToDownloadLabel"
+                            android:layout_row="1"
+                            android:layout_column="0"
+                    android:layout_below="@+id/statStatusLabel"
+                    android:layout_alignParentStart="true"
+                    android:layout_marginRight="5dp"
+                    android:layout_marginBottom="5dp"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:text="0"
+                    android:id="@+id/filesToDownloadValue"
+                    android:layout_alignTop="@+id/filesToDownloadLabel"
+                    android:layout_toEndOf="@+id/filesToDownloadLabel"
+                    android:layout_marginTop="4dp"
+                    android:singleLine="true"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceLarge"
+                    android:text="@string/statistics_current_download_label"
+                    android:id="@+id/currentDownloadLabel"
+                    android:layout_row="1"
+                    android:layout_column="0"
+                    android:layout_marginRight="5dp"
+                    android:layout_below="@+id/filesToDownloadLabel"
+                    android:layout_alignParentStart="true"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:id="@+id/currentDownloadValue"
+                    android:singleLine="true"
+                    android:layout_alignBaseline="@+id/currentDownloadLabel"
+                    android:layout_alignBottom="@+id/currentDownloadLabel"
+                    android:layout_toEndOf="@+id/currentDownloadLabel"
+                    android:layout_marginTop="4dp"
+                    android:visibility="gone" />
+            </RelativeLayout>
+
+
+        </LinearLayout>
+
+    </android.support.v7.widget.CardView>
+
+</FrameLayout>

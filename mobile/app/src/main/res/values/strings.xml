@@ -1,0 +1,29 @@
+<resources>
+    <string name="app_name">Music Sync</string>
+
+    <string name="refresh_toggle_label">Refresh Toggle</string>
+    <string name="refresh_interval_label">Refresh Interval (in minutes)</string>
+
+    <string name="statistics_status_label">Status: </string>
+    <string name="statistics_download_label">Files left: </string>
+    <string name="statistics_current_download_label">Current Download: </string>
+
+    <string name="force_refresh_label">Force Refresh</string>
+    <string name="removeallfiles_label">Remove All Files</string>
+
+    <string name="dialog_okay">Okay</string>
+    <string name="dialog_dismiss">Dismiss</string>
+    <string name="dialog_cancel">Cancel</string>
+    <string name="dialog_delete">Delete</string>
+
+    <string name="action_about">About</string>
+
+    <string name="about_dialog_title">About</string>
+    <string name="about_dialog_desc">Music Sync by Wassup789</string>
+
+    <string name="dialog_storage_title">Enable Storage Permission</string>
+    <string name="dialog_storage_desc">This application is missing the permission: storage.\nPlease enable the permission for this application to work properly.</string>
+
+    <string name="dialog_removefiles_title">Delete all media files?</string>
+    <string name="dialog_removefiles_desc">By deleting all media files, you will have to download them again.</string>
+</resources>
