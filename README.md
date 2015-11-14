@@ -8,7 +8,7 @@ This code is licensed under the MIT License.
 
 This project requires the installation of:
 
- - [Nginx](http://nginx.org/en/) (or [Apache2](https://httpd.apache.org/) with [mod_xsendfile](https://tn123.org/mod_xsendfile/))
+ - [Nginx](http://nginx.org/en/) (or [Apache2](https://httpd.apache.org/) with [mod_xsendfile](https://tn123.org/mod_xsendfile/)) with [PHP](https://secure.php.net/)
  - [Android Studio](http://developer.android.com/sdk/)
  - An Android phone
 
