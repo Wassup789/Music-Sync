@@ -2,7 +2,7 @@
 
 ## Information
 
-The files in this directory are used for the phone to synchornize with the desktop media files.
+The files in this directory are used for the phone to synchronize with the desktop media files.
 
 The 'media' directory requires subdirectories (only 'default' is valid for now) for profiles.
 

@@ -54,9 +54,9 @@
                             android:id="@+id/filesToDownloadLabel"
                             android:layout_row="1"
                             android:layout_column="0"
-                    android:layout_below="@+id/statStatusLabel"
-                    android:layout_alignParentStart="true"
                     android:layout_marginRight="5dp"
+                    android:layout_below="@+id/currentPlaylistLabel"
+                    android:layout_alignParentStart="true"
                     android:layout_marginBottom="5dp"
                     android:visibility="gone" />
 
@@ -66,10 +66,10 @@
                     android:textAppearance="?android:attr/textAppearanceMedium"
                     android:text="0"
                     android:id="@+id/filesToDownloadValue"
-                    android:layout_alignTop="@+id/filesToDownloadLabel"
-                    android:layout_toEndOf="@+id/filesToDownloadLabel"
-                    android:layout_marginTop="4dp"
                     android:singleLine="true"
+                    android:layout_alignBaseline="@+id/filesToDownloadLabel"
+                    android:layout_alignBottom="@+id/filesToDownloadLabel"
+                    android:layout_toEndOf="@+id/filesToDownloadLabel"
                     android:visibility="gone" />
 
                 <TextView
@@ -95,6 +95,31 @@
                     android:layout_alignBottom="@+id/currentDownloadLabel"
                     android:layout_toEndOf="@+id/currentDownloadLabel"
                     android:layout_marginTop="4dp"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceLarge"
+                    android:text="@string/statistics_current_playlist_label"
+                    android:id="@+id/currentPlaylistLabel"
+                    android:layout_row="1"
+                    android:layout_column="0"
+                    android:layout_marginRight="5dp"
+                    android:layout_below="@+id/statStatusLabel"
+                    android:layout_alignParentStart="true"
+                    android:layout_marginBottom="5dp"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:id="@+id/currentPlaylistValue"
+                    android:singleLine="true"
+                    android:layout_alignBaseline="@+id/currentPlaylistLabel"
+                    android:layout_alignBottom="@+id/currentPlaylistLabel"
+                    android:layout_toEndOf="@+id/currentPlaylistLabel"
                     android:visibility="gone" />
             </RelativeLayout>
 
