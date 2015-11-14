@@ -21,6 +21,8 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
+import android.system.ErrnoException;
+import android.util.Base64;
 import android.util.Log;
 import android.widget.ImageView;
 
@@ -37,6 +39,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -56,7 +59,9 @@ public class BackgroundService extends Service {
     private final IBinder mBinder = new LocalBinder();
     public static final String mainDirectory = Environment.getExternalStorageDirectory() + "/musicsync";
     public static final String mediaDirectory = mainDirectory + "/files/";
-    public static final String playlistFile = mainDirectory + "/default.m3u8";
+    public static final int notificationID = 0;
+    public static final int notificationIDComplete = notificationID + 1;
+    public static final int notificationIDPermMissing = notificationID + 2;
 
     ResultReceiver resultReceiver;
     private SharedPreferences settings;
@@ -78,22 +83,15 @@ public class BackgroundService extends Service {
 
         Log.i("BackgroundService", "Service started");
 
-        settings = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        settings = getSharedPreferences("settings", Context.MODE_PRIVATE);
 
         File fileMainDirectory = new File(mainDirectory);
-        Boolean test = true;
         if (!fileMainDirectory.exists())
-            test = fileMainDirectory.mkdirs();
+            fileMainDirectory.mkdirs();
         File fileMediaDirectory = new File(mediaDirectory);
         if (!fileMediaDirectory.exists())
             fileMediaDirectory.mkdirs();
 
-        /*SharedPreferences.Editor settingsEditor = settings.edit();
-        if (!settings.contains("refreshToggle"))
-            settingsEditor.putBoolean("refreshToggle", SettingsFragment.default_refreshToggle);
-        if (!settings.contains("refreshInterval"))
-            settingsEditor.putInt("refreshInterval", SettingsFragment.default_refreshInterval);
-        settingsEditor.putString("backgroundServiceStatus", "Sleeping");*/
         sendMessage(100, "Sleeping");
 
         Boolean toStart = settings.getBoolean("refreshToggle", SettingsFragment.default_refreshToggle);
@@ -116,16 +114,61 @@ public class BackgroundService extends Service {
     private TimerTask timerTask = new TimerTask() {
         @Override
         public void run() {
-            update();
+            //update_OLD();
+            removeOldPlaylists();
+            String[] playlists = new Gson().fromJson(settings.getString("playlists", SettingsFragment.default_playlists), String[].class);
+            for(int i = 0; i < playlists.length; i++){
+                if(playlists[i].equals(SettingsFragment.default_playlist))
+                    break;
+                else
+                    update(playlists[i]);
+            }
             sendMessage(100, "Sleeping");
             isRunning = false;
         }
     };
 
-    public void update() {
+    public void removeOldPlaylists() {
+        String[] playlists = new Gson().fromJson(settings.getString("playlists", SettingsFragment.default_playlists), String[].class);
+        File f = new File(mediaDirectory);
+        String[] directories = f.list(new FilenameFilter() {
+            @Override
+            public boolean accept(File current, String name) {
+                return new File(current, name).isDirectory();
+            }
+        });
+        for(int i = 0; i < directories.length; i++) {
+            Boolean isValid = false;
+            for(int ii = 0; ii < playlists.length; ii++) {
+                if(directories[i].equals(playlists[ii])) {
+                    isValid = true;
+                    break;
+                }
+            }
+            if(!isValid){
+                File removeDir = new File(mediaDirectory + directories[i]);
+                File[] removeFiles = removeDir.listFiles();
+                for(int ii = 0; ii < removeFiles.length; ii++){
+                    removeFiles[ii].delete();
+                }
+                removeDir.delete();
+            }
+        }
+    }
+
+    public void update(String playlistName) {
         int permissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
         if (permissionCheck == PackageManager.PERMISSION_DENIED) {
-            timerTask.cancel();
+            Log.w("BackgroundService", "Missing permission: WRITE_EXTERNAL_STORAGE; Update cancelled");
+            timer.cancel();
+
+            NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this)
+                    .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.drawable.ic_file_download_black_48dp))
+                    .setSmallIcon(R.drawable.ic_headset_black_48dp)
+                    .setContentTitle("Missing permission: storage")
+                    .setAutoCancel(true);
+            notificationManager.notify(notificationIDPermMissing, mBuilder.build());
             return;
         }
 
@@ -134,23 +177,37 @@ public class BackgroundService extends Service {
         else
             return;
         sendMessage(100, "Gathering Information");
+        sendMessage(103, playlistName);
         try {
-            URL url = new URL("http://wassup789.ga/scripts/musicsync/check.php");
-            BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
+            URL verifyUrl = new URL("http://wassup789.com/scripts/musicsync/verify.php?q=" + Base64.encodeToString(playlistName.getBytes(), Base64.DEFAULT));
+            BufferedReader in = new BufferedReader(new InputStreamReader(verifyUrl.openStream()));
 
             String inputLine;
             String data = "";
             while ((inputLine = in.readLine()) != null)
                 data = inputLine;
-
             Gson gson = new GsonBuilder().create();
+            Boolean[] doesPlaylistExist = gson.fromJson(data, Boolean[].class);
+            if(!doesPlaylistExist[0]) {
+                Log.i("BackgroundService", "Playlist: \"" + playlistName + "\" does not exist, skipping playlist");
+                return;
+            }
+
+            URL getFilesUrl = new URL("http://wassup789.com/scripts/musicsync/getfiles.php?q=" + Base64.encodeToString(playlistName.getBytes(), Base64.DEFAULT));
+            in = new BufferedReader(new InputStreamReader(getFilesUrl.openStream()));
+
+            String inputLine2;
+            data = "";
+            while ((inputLine2 = in.readLine()) != null)
+                data = inputLine2;
+
             ArrayList<MediaInformation> output = gson.fromJson(data, new TypeToken<ArrayList<MediaInformation>>() {
             }.getType());
-            for (int i = 0; i < output.size(); i++) {
-                //Log.i("BackgroundService", output.get(i).name);
-            }
+
             //Go through every file and remove duplicates and non-existing files
-            File f = new File(mediaDirectory);
+            File f = new File(mediaDirectory + playlistName + "/");
+            if(!f.exists())
+                f.mkdirs();
             File file[] = f.listFiles();
             ArrayList<File> filesRemove = new ArrayList<>(Arrays.asList(f.listFiles()));
 
@@ -174,26 +231,26 @@ public class BackgroundService extends Service {
 
             //Check if you need to download files
             if (output.size() == 0) {
-                updatePlaylist();
+                updatePlaylist(playlistName);
                 return;
             }
 
             //Reloop into array and download the files
             NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-            int notificationID = 0;
 
             String failedDownloadString = "";
             int failedDownloads = 0;
 
             notificationManager.cancel(notificationID);
-            notificationManager.cancel(notificationID + 1);
+            notificationManager.cancel(notificationIDComplete);
+            notificationManager.cancel(notificationIDPermMissing);
 
             Log.i("BackgroundService", "Start download of " + output.size() + " file(s)");
             sendMessage(100, "Downloading " + output.size() + " file(s)");
 
             for (int i = 0; i < output.size(); i++) {
                 try {
-                    sendMessage(101, "" + (output.size() - i - failedDownloads) + " (" + Math.round(((double) i / output.size()) * 100) + "% downloaded)");
+                    sendMessage(101, "" + (output.size() - i) + " (" + Math.round(((double) i / output.size()) * 100) + "% downloaded)");
                     sendMessage(102, output.get(i).name);
                     if (failedDownloads > 0)
                         failedDownloadString = "\n" + failedDownloads + " files failed to download";
@@ -213,13 +270,13 @@ public class BackgroundService extends Service {
 
                     Log.i("BackgroundService", "Downloading: \"" + output.get(i).name + "\"");
 
-                    URL dUrl = new URL("http://wassup789.ga/scripts/musicsync/download.php?q=" + output.get(i).name_b64);
-                    URLConnection connection = dUrl.openConnection();
+                    URL downloadUrl = new URL("http://wassup789.com/scripts/musicsync/download.php?q=" + output.get(i).name_b64);
+                    URLConnection connection = downloadUrl.openConnection();
                     connection.connect();
 
                     // download the file
                     InputStream inputs = new BufferedInputStream(connection.getInputStream());
-                    OutputStream outputs = new FileOutputStream(mediaDirectory + output.get(i).name);
+                    OutputStream outputs = new FileOutputStream(mediaDirectory + playlistName + "/" + output.get(i).name);
 
                     byte datas[] = new byte[1024];
                     int count;
@@ -231,7 +288,7 @@ public class BackgroundService extends Service {
                     inputs.close();
                 } catch (FileNotFoundException e) {
                     Log.w("BackgroundService", "File: \"" + output.get(i).name + "\" failed to download");
-                    Log.w("BackgroundService", "URL: " + "http://wassup789.ga/scripts/musicsync/download.php?q=" + output.get(i).name_b64);
+                    Log.w("BackgroundService", "URL: " + "http://wassup789.com/scripts/musicsync/download.php?q=" + output.get(i).name_b64);
                     failedDownloads++;
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -251,39 +308,23 @@ public class BackgroundService extends Service {
                     .setStyle(new NotificationCompat.BigTextStyle()
                                     .bigText((output.size() - failedDownloads) + " files downloaded" + failedDownloadString)
                     );
-            notificationManager.notify(notificationID + 1, mBuilder.build());
+            notificationManager.notify(notificationIDComplete, mBuilder.build());
 
-            updatePlaylist();
+            updatePlaylist(playlistName);
         } catch (IOException e) {
             Log.e("BackgroundService", "An error has occurred whilst updating the media files.");
             e.printStackTrace();
         }
     }
 
-    public void updatePlaylist() {
-        /*try {
-            Log.i("BackgroundService", "Generating playlist");
-            File playlist = new File(playlistFile);
-
-            FileOutputStream outputStream = new FileOutputStream(playlist, false);
-            BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(outputStream));
-
-            bufferedWriter.write(mediaDirectory);
-            bufferedWriter.close();
-            outputStream.close();
-            Log.i("BackgroundService", "Playlist generated");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return;*/
-
+    public void updatePlaylist(String playlistName) {
         sendMessage(100, "Updating Playlist");
         try {
             Log.i("BackgroundService", "Generating playlist");
-            File f = new File(mediaDirectory);
+            File f = new File(mediaDirectory + playlistName + "/");
             File mediaFiles[] = f.listFiles();
 
-            File playlist = new File(playlistFile);
+            File playlist = new File(mainDirectory + playlistName + ".m3u8");
 
             FileOutputStream outputStream = new FileOutputStream(playlist, false);
             BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(outputStream));
@@ -292,19 +333,23 @@ public class BackgroundService extends Service {
             bufferedWriter.newLine();
             bufferedWriter.newLine();
 
-            for(int i = 0; i < mediaFiles.length; i++) {
-                MediaMetadataRetriever mmr = new MediaMetadataRetriever();
-                mmr.setDataSource(mediaDirectory + mediaFiles[i].getName());
-                String artist = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
-                String title = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE);
-                String duration = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
-                mmr.release();
+            for (int i = 0; i < mediaFiles.length; i++) {
+                try {
+                    MediaMetadataRetriever mmr = new MediaMetadataRetriever();
+                    mmr.setDataSource(mediaDirectory + playlistName + "/" + mediaFiles[i].getName());
+                    String artist = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
+                    String title = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE);
+                    String duration = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+                    mmr.release();
 
-                bufferedWriter.write("#EXTINF:" + duration + ", " + artist + " - " + title);
-                bufferedWriter.newLine();
-                bufferedWriter.write((mediaDirectory + mediaFiles[i].getName()).toString());
-                bufferedWriter.newLine();
-                bufferedWriter.newLine();
+                    bufferedWriter.write("#EXTINF:" + duration + ", " + artist + " - " + title);
+                    bufferedWriter.newLine();
+                    bufferedWriter.write((mediaDirectory + playlistName + "/" + mediaFiles[i].getName()).toString());
+                    bufferedWriter.newLine();
+                    bufferedWriter.newLine();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
             bufferedWriter.close();
             outputStream.close();

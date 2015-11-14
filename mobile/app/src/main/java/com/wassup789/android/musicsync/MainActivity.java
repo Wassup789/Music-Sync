@@ -3,14 +3,9 @@ package com.wassup789.android.musicsync;
 import android.Manifest;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.content.res.Configuration;
-import android.graphics.SweepGradient;
-import android.net.Uri;
 import android.os.Handler;
 import android.os.ResultReceiver;
-import android.preference.PreferenceManager;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -20,16 +15,9 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
-import android.text.Editable;
-import android.text.TextWatcher;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
-import android.widget.CompoundButton;
-import android.widget.ImageView;
-import android.widget.Switch;
 import android.widget.TextView;
 
 import com.afollestad.materialdialogs.MaterialDialog;
@@ -120,9 +108,9 @@ public class MainActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case R.id.action_about:
                 new MaterialDialog.Builder(this)
-                        .title(getString(R.string.about_dialog_title))
+                        .title(getString(R.string.dialog_about_title))
                         .positiveText(getString(R.string.dialog_dismiss))
-                        .content(getString(R.string.about_dialog_desc))
+                        .content(getString(R.string.dialog_about_desc))
                         .show();
                 return true;
             default:
@@ -175,31 +163,44 @@ public class MainActivity extends AppCompatActivity {
                     public void run() {
                         String status = resultData.getString("data");
                         TextView statStatusValue = (TextView) findViewById(R.id.statStatusValue);
-                        if(statStatusValue != null)
+                        if (statStatusValue != null)
                             statStatusValue.setText(status);
 
                         TextView filesToDownloadLabel = (TextView) findViewById(R.id.filesToDownloadLabel);
                         TextView filesToDownloadValue = (TextView) findViewById(R.id.filesToDownloadValue);
                         TextView currentDownloadLabel = (TextView) findViewById(R.id.currentDownloadLabel);
                         TextView currentDownloadValue = (TextView) findViewById(R.id.currentDownloadValue);
-                        if(status != null && !status.contains("Downloading")) {
-                            if(filesToDownloadLabel != null)
+                        TextView currentPlaylistLabel = (TextView) findViewById(R.id.currentPlaylistLabel);
+                        TextView currentPlaylistValue = (TextView) findViewById(R.id.currentPlaylistValue);
+                        if (status != null && !status.contains("Downloading")) {
+                            if (filesToDownloadLabel != null)
                                 filesToDownloadLabel.setVisibility(View.GONE);
-                            if(filesToDownloadValue != null)
+                            if (filesToDownloadValue != null)
                                 filesToDownloadValue.setVisibility(View.GONE);
-                            if(currentDownloadLabel != null)
+                            if (currentDownloadLabel != null)
                                 currentDownloadLabel.setVisibility(View.GONE);
-                            if(currentDownloadValue != null)
+                            if (currentDownloadValue != null)
                                 currentDownloadValue.setVisibility(View.GONE);
-                        }else{
-                            if(filesToDownloadLabel != null)
+                        } else {
+                            if (filesToDownloadLabel != null)
                                 filesToDownloadLabel.setVisibility(View.VISIBLE);
-                            if(filesToDownloadValue != null)
+                            if (filesToDownloadValue != null)
                                 filesToDownloadValue.setVisibility(View.VISIBLE);
-                            if(currentDownloadLabel != null)
+                            if (currentDownloadLabel != null)
                                 currentDownloadLabel.setVisibility(View.VISIBLE);
-                            if(currentDownloadValue != null)
+                            if (currentDownloadValue != null)
                                 currentDownloadValue.setVisibility(View.VISIBLE);
+                        }
+                        if (status != null && (status.contains("Gathering Information") || status.contains("Downloading") || status.contains("Removing Files") || status.contains("Updating Playlist"))) {
+                            if (currentPlaylistLabel != null)
+                                currentPlaylistLabel.setVisibility(View.VISIBLE);
+                            if (currentPlaylistValue != null)
+                                currentPlaylistValue.setVisibility(View.VISIBLE);
+                        } else {
+                            if (currentPlaylistLabel != null)
+                                currentPlaylistLabel.setVisibility(View.GONE);
+                            if (currentPlaylistValue != null)
+                                currentPlaylistValue.setVisibility(View.GONE);
                         }
                     }
                 });
@@ -219,6 +220,15 @@ public class MainActivity extends AppCompatActivity {
                         TextView currentDownloadValue = (TextView) findViewById(R.id.currentDownloadValue);
                         if(currentDownloadValue != null)
                             currentDownloadValue.setText(currentDownload);
+                    }
+                });
+            }else if(resultCode == 103){//Set current playlist
+                runOnUiThread( new Thread() {
+                    public void run() {
+                        String currentPlaylist = resultData.getString("data");
+                        TextView currentPlaylistValue = (TextView) findViewById(R.id.currentPlaylistValue);
+                        if(currentPlaylistValue != null)
+                            currentPlaylistValue.setText(currentPlaylist);
                     }
                 });
             }
