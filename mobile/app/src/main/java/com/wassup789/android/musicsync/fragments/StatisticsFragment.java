@@ -1,87 +1,56 @@
 package com.wassup789.android.musicsync.fragments;
 
-import android.content.Intent;
-import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
-import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.CompoundButton;
-import android.widget.EditText;
-import android.widget.Switch;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.widget.LinearLayout;
 
-import com.wassup789.android.musicsync.BackgroundService;
+import com.github.mikephil.charting.charts.HorizontalBarChart;
+import com.github.mikephil.charting.data.BarData;
+import com.github.mikephil.charting.data.BarDataSet;
+import com.github.mikephil.charting.data.BarEntry;
 import com.wassup789.android.musicsync.R;
 
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.ArrayList;
+import java.util.Arrays;
 
-public class StatisticsFragment extends Fragment{
-    private static Timer timer = new Timer();
-    SharedPreferences settings;
-
-    public String backgroundServiceStatus = "Sleeping";
+public class StatisticsFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_statistics, container, false);
 
+        registerSpaceLeftGraph(view);
+
         return view;
     }
 
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
+    public void registerSpaceLeftGraph(View view) {
+        HorizontalBarChart spaceLeftChart = (HorizontalBarChart) view.findViewById(R.id.spaceLeftChart);
 
-        settings = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        timer.scheduleAtFixedRate(timerTask, 0, 1000);
+        spaceLeftChart.setDescription("");
+
+        ArrayList<BarEntry> yVals = new ArrayList<BarEntry>();
+        yVals.add(new BarEntry(new float[]{14, 2}, 0));
+
+        BarDataSet set = new BarDataSet(yVals, "");
+        set.setStackLabels(new String[] {"Space Used", "Space Left"});
+        set.setColors(Arrays.asList(new Integer[]{Color.parseColor("#009688"), Color.parseColor("#CED7DB")}));
+
+        ArrayList < BarDataSet > dataSets = new ArrayList<BarDataSet>();
+        dataSets.add(set);
+
+        BarData data = new BarData(new String[] {""}, dataSets);
+        spaceLeftChart.setData(data);
+        spaceLeftChart.setTouchEnabled(false);
+        spaceLeftChart.setDrawGridBackground(false);
+        spaceLeftChart.getAxisLeft().setEnabled(false);
+        spaceLeftChart.getAxisRight().setEnabled(false);
+        spaceLeftChart.invalidate();
+
+        spaceLeftChart.setData(data);
     }
-
-    private TimerTask timerTask = new TimerTask() {
-        @Override
-        public void run() {
-            backgroundServiceStatus = settings.getString("backgroundServiceStatus", "Unknown");
-            //Log.i("StatisticsFragment", backgroundServiceStatus);
-
-            //TextView statStatusValue = (TextView) getView().findViewById(R.id.statStatusValue);
-            //statStatusValue.setText(backgroundServiceStatus);
-            //mHandler.obtainMessage(1).sendToTarget();
-        }
-    };
-
-    public Handler mHandler = new Handler() {
-        public void handleMessage(Message msg) {
-            //TextView statStatusValue = (TextView) getView().findViewById(R.id.statStatusValue);
-            //statStatusValue.setText(backgroundServiceStatus);
-        }
-    };
-/*
-    private class UpdaeteStatistics extends AsyncTask<URL, Integer, Long> {
-        protected Long doInBackground(URL... urls) {
-            int count = urls.length;
-            long totalSize = 0;
-            for (int i = 0; i < count; i++) {
-                totalSize += Downloader.downloadFile(urls[i]);
-                publishProgress((int) ((i / (float) count) * 100));
-                // Escape early if cancel() is called
-                if (isCancelled()) break;
-            }
-            return totalSize;
-        }
-
-        protected void onProgressUpdate(Integer... progress) {
-            setProgressPercent(progress[0]);
-        }
-
-        protected void onPostExecute(Long result) {
-            showDialog("Downloaded " + result + " bytes");
-        }
-    }*/
 }
