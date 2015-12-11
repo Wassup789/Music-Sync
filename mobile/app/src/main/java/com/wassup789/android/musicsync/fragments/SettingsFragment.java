@@ -1,5 +1,6 @@
 package com.wassup789.android.musicsync.fragments;
 
+import android.app.NotificationManager;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -10,6 +11,7 @@ import android.content.Context;
 import android.hardware.ConsumerIrManager;
 import android.os.Bundle;
 import android.text.Editable;
+import android.text.InputType;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -36,13 +38,16 @@ import com.wassup789.android.musicsync.objectClasses.PlaylistInformation;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 
 public class SettingsFragment extends Fragment{
 
+    public static final String default_server = "";
     public static final Boolean default_refreshToggle = true;
     public static final Integer default_refreshInterval = 5;// Refreshes every 5 minutes
     public static final String default_playlist = "\\/:*?_NULL_\"<>|";
@@ -62,6 +67,8 @@ public class SettingsFragment extends Fragment{
     public void registerGeneral(View view){
         SharedPreferences settings = getActivity().getSharedPreferences("settings", Context.MODE_PRIVATE);
         SharedPreferences.Editor settingsEditor = settings.edit();
+        if(!settings.contains("server"))
+            settingsEditor.putString("server", default_server);
         if(!settings.contains("refreshToggle"))
             settingsEditor.putBoolean("refreshToggle", default_refreshToggle);
         if(!settings.contains("refreshInterval"))
@@ -80,6 +87,45 @@ public class SettingsFragment extends Fragment{
     }
 
     public void registerListeners(View view) {
+        Button selectServerButton = (Button) view.findViewById(R.id.selectServerButton);
+        selectServerButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                final SharedPreferences settings = getActivity().getSharedPreferences("settings", Context.MODE_PRIVATE);
+                String serverUrl = settings.getString("server", default_server);
+                new MaterialDialog.Builder(getActivity())
+                    .title(R.string.dialog_selectServer_title)
+                    .positiveText(R.string.dialog_done)
+                        .inputType(InputType.TYPE_CLASS_TEXT)
+                        .input(getString(R.string.dialog_selectServer_hint), serverUrl, new MaterialDialog.InputCallback() {
+                            @Override
+                            public void onInput(MaterialDialog dialog, CharSequence input) {
+                                try {
+                                    new URL(input.toString());
+                                } catch (MalformedURLException e) {
+                                    Toast.makeText(getActivity(), "Invalid URL", Toast.LENGTH_SHORT).show();
+                                    return;
+                                }
+                                String url = input.toString();
+                                if(!url.toLowerCase().startsWith("http")  && !url.toLowerCase().startsWith("https")) {
+                                    Toast.makeText(getActivity(), "Invalid URL, only http and https are supported", Toast.LENGTH_SHORT).show();
+                                    return;
+                                }
+
+                                if(!url.endsWith("/"))
+                                    url += "/";
+                                Log.i("SettingsFragment", url);
+
+                                SharedPreferences.Editor settingsEditor = settings.edit();
+                                settingsEditor.putString("server", url);
+                                settingsEditor.putString("playlists", default_playlists);
+                                settingsEditor.commit();
+                            }
+                        })
+                        .show();
+            }
+        });
+
         Button selectPlaylistsButton = (Button) view.findViewById(R.id.selectPlaylistsButton);
         selectPlaylistsButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -107,6 +153,8 @@ public class SettingsFragment extends Fragment{
                 intent.putExtra("receiver", MainActivity.resultReceiver);
 
                 getActivity().stopService(intent);
+                NotificationManager notificationManager = (NotificationManager) getContext().getSystemService(Context.NOTIFICATION_SERVICE);
+                notificationManager.cancel(BackgroundService.notificationID);
                 if (isChecked)
                     getActivity().startService(intent);
             }
@@ -131,6 +179,8 @@ public class SettingsFragment extends Fragment{
                 intent.putExtra("receiver", MainActivity.resultReceiver);
 
                 getActivity().stopService(intent);
+                NotificationManager notificationManager = (NotificationManager) getContext().getSystemService(Context.NOTIFICATION_SERVICE);
+                notificationManager.cancel(BackgroundService.notificationID);
                 getActivity().startService(intent);
             }
         });
@@ -145,6 +195,8 @@ public class SettingsFragment extends Fragment{
                 intent.putExtra("receiver", MainActivity.resultReceiver);
 
                 getActivity().stopService(intent);
+                NotificationManager notificationManager = (NotificationManager) getContext().getSystemService(Context.NOTIFICATION_SERVICE);
+                notificationManager.cancel(BackgroundService.notificationID);
                 getActivity().startService(intent);
             }
         });
@@ -190,8 +242,12 @@ public class SettingsFragment extends Fragment{
     }
 
     public void retrievePlaylistSelection() {
+        SharedPreferences settings = getActivity().getSharedPreferences("settings", Context.MODE_PRIVATE);
+        String serverUrl = settings.getString("server", SettingsFragment.default_server);
+        if(!serverUrl.endsWith("/"))
+            serverUrl += "/";
         try {
-            URL url = new URL("http://wassup789.com/scripts/musicsync/playlists.php");
+            URL url = new URL(serverUrl + "playlists.php");
             BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
 
             String inputLine;
@@ -201,8 +257,6 @@ public class SettingsFragment extends Fragment{
 
             Gson gson = new GsonBuilder().create();
 
-            SharedPreferences settings = getActivity().getSharedPreferences("settings", Context.MODE_PRIVATE);
-            SharedPreferences.Editor settingsEditor = settings.edit();
             String[] savedPlaylists = gson.fromJson(settings.getString("playlists", default_playlists), String[].class);
             final ArrayList<Integer> playlistsToSelect = new ArrayList<Integer>();
 
@@ -248,7 +302,17 @@ public class SettingsFragment extends Fragment{
                             .show();
                 }
             });
-        } catch (IOException e) {
+        } catch (FileNotFoundException e) {
+            Log.e("SettingsFragment", "Could not reach server URL specified");
+            if(!playlistsDialog.isCancelled())
+                playlistsDialog.cancel();
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(getActivity(), "Could not reach server", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }catch(IOException e) {
             Log.e("SettingsFragment", "An error has occurred whilst retrieving playlists.");
             e.printStackTrace();
         }

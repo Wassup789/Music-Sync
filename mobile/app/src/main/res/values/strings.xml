@@ -1,9 +1,12 @@
 <resources>
+    <string name="empty"></string>
+
     <string name="app_name">Music Sync</string>
 
+    <string name="select_server_label">Select Server</string>
     <string name="select_playlists_label">Select playlists</string>
 
-    <string name="refresh_toggle_label">Refresh Toggle</string>
+    <string name="refresh_toggle_label">Enable</string>
     <string name="refresh_interval_label">Refresh Interval (in minutes)</string>
 
     <string name="statistics_status_label">Status: </string>
@@ -18,6 +21,7 @@
     <string name="dialog_dismiss">Dismiss</string>
     <string name="dialog_cancel">Cancel</string>
     <string name="dialog_delete">Delete</string>
+    <string name="dialog_done">Done</string>
     <string name="dialog_loading">Loading...</string>
     <string name="dialog_wait">Please wait...</string>
 
@@ -33,4 +37,7 @@
     <string name="dialog_removefiles_desc">By deleting all media files, you will have to download them again.</string>
 
     <string name="dialog_playlistsSelection_title">Select playlist(s)</string>
+
+    <string name="dialog_selectServer_title">Select Server</string>
+    <string name="dialog_selectServer_hint">Server URL</string>
 </resources>

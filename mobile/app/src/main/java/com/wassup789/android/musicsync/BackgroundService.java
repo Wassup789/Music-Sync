@@ -46,6 +46,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.Array;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
@@ -57,8 +58,8 @@ import java.util.TimerTask;
 
 public class BackgroundService extends Service {
     private final IBinder mBinder = new LocalBinder();
-    public static final String mainDirectory = Environment.getExternalStorageDirectory() + "/musicsync";
-    public static final String mediaDirectory = mainDirectory + "/files/";
+    public static final String mainDirectory = Environment.getExternalStorageDirectory() + "/musicsync/";
+    public static final String mediaDirectory = mainDirectory + "files/";
     public static final int notificationID = 0;
     public static final int notificationIDComplete = notificationID + 1;
     public static final int notificationIDPermMissing = notificationID + 2;
@@ -103,7 +104,6 @@ public class BackgroundService extends Service {
     }
 
     public void onDestroy() {
-        SharedPreferences.Editor settingsEditor = settings.edit();
         sendMessage(100, "Killed");
         Log.i("BackgroundService", "Service killed");
     }
@@ -114,7 +114,6 @@ public class BackgroundService extends Service {
     private TimerTask timerTask = new TimerTask() {
         @Override
         public void run() {
-            //update_OLD();
             removeOldPlaylists();
             String[] playlists = new Gson().fromJson(settings.getString("playlists", SettingsFragment.default_playlists), String[].class);
             for(int i = 0; i < playlists.length; i++){
@@ -157,6 +156,14 @@ public class BackgroundService extends Service {
     }
 
     public void update(String playlistName) {
+        String serverUrl = settings.getString("server", SettingsFragment.default_server);
+        try {
+            new URL(serverUrl);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+        if(!serverUrl.endsWith("/"))
+            serverUrl += "/";
         int permissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
         if (permissionCheck == PackageManager.PERMISSION_DENIED) {
             Log.w("BackgroundService", "Missing permission: WRITE_EXTERNAL_STORAGE; Update cancelled");
@@ -179,7 +186,7 @@ public class BackgroundService extends Service {
         sendMessage(100, "Gathering Information");
         sendMessage(103, playlistName);
         try {
-            URL verifyUrl = new URL("http://wassup789.com/scripts/musicsync/verify.php?q=" + Base64.encodeToString(playlistName.getBytes(), Base64.DEFAULT));
+            URL verifyUrl = new URL(serverUrl + "verify.php?q=" + Base64.encodeToString(playlistName.getBytes(), Base64.DEFAULT));
             BufferedReader in = new BufferedReader(new InputStreamReader(verifyUrl.openStream()));
 
             String inputLine;
@@ -193,7 +200,7 @@ public class BackgroundService extends Service {
                 return;
             }
 
-            URL getFilesUrl = new URL("http://wassup789.com/scripts/musicsync/getfiles.php?q=" + Base64.encodeToString(playlistName.getBytes(), Base64.DEFAULT));
+            URL getFilesUrl = new URL(serverUrl + "getfiles.php?q=" + Base64.encodeToString(playlistName.getBytes(), Base64.DEFAULT));
             in = new BufferedReader(new InputStreamReader(getFilesUrl.openStream()));
 
             String inputLine2;
@@ -270,7 +277,7 @@ public class BackgroundService extends Service {
 
                     Log.i("BackgroundService", "Downloading: \"" + output.get(i).name + "\"");
 
-                    URL downloadUrl = new URL("http://wassup789.com/scripts/musicsync/download.php?q=" + output.get(i).name_b64);
+                    URL downloadUrl = new URL(serverUrl + "download.php?q=" + output.get(i).name_b64);
                     URLConnection connection = downloadUrl.openConnection();
                     connection.connect();
 
@@ -288,7 +295,7 @@ public class BackgroundService extends Service {
                     inputs.close();
                 } catch (FileNotFoundException e) {
                     Log.w("BackgroundService", "File: \"" + output.get(i).name + "\" failed to download");
-                    Log.w("BackgroundService", "URL: " + "http://wassup789.com/scripts/musicsync/download.php?q=" + output.get(i).name_b64);
+                    Log.w("BackgroundService", "URL: " + serverUrl + "download.php?q=" + output.get(i).name_b64);
                     failedDownloads++;
                 } catch (IOException e) {
                     e.printStackTrace();

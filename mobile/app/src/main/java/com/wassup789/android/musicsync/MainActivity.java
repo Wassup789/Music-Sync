@@ -24,6 +24,7 @@ import com.afollestad.materialdialogs.MaterialDialog;
 import com.astuetz.PagerSlidingTabStrip;
 import com.wassup789.android.musicsync.fragments.SettingsFragment;
 import com.wassup789.android.musicsync.fragments.StatisticsFragment;
+import com.wassup789.android.musicsync.fragments.StatusFragment;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -126,8 +127,10 @@ public class MainActivity extends AppCompatActivity {
 
         public Fragment getItem(int num) {
             switch(num) {
-                case 1:
+                case 2:
                     return new StatisticsFragment();
+                case 1:
+                    return new StatusFragment();
                 default:
                     return new SettingsFragment();
             }
@@ -135,14 +138,16 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public int getCount() {
-            return 2;
+            return 3;
         }
 
         @Override
         public CharSequence getPageTitle(int position) {
             switch(position) {
-                case 1:
+                case 2:
                     return "Statistics";
+                case 1:
+                    return "Status";
                 default:
                     return "Settings";
             }
