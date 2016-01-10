@@ -127,8 +127,8 @@ public class MainActivity extends AppCompatActivity {
 
         public Fragment getItem(int num) {
             switch(num) {
-                case 2:
-                    return new StatisticsFragment();
+                //case 2:
+                //    return new StatisticsFragment();
                 case 1:
                     return new StatusFragment();
                 default:
@@ -144,8 +144,8 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public CharSequence getPageTitle(int position) {
             switch(position) {
-                case 2:
-                    return "Statistics";
+                //case 2:
+                //    return "Statistics";
                 case 1:
                     return "Status";
                 default:
