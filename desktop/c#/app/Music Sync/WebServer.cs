@@ -4,6 +4,7 @@ using System.Threading;
 using System.Linq;
 using System.Text;
 using System.IO;
+using System.Diagnostics;
 
 namespace MusicSync
 {
@@ -40,8 +41,7 @@ namespace MusicSync
             }
             catch (HttpListenerException e)
             {
-                Console.WriteLine(string.Format("Error Type: HttpListenerException; Error Code: {0}\nCould not run server on port {1}, is another server running on that port?", e.ErrorCode, port));
-                Console.ReadKey();
+                Debug.WriteLine(string.Format("Error Type: HttpListenerException; Error Code: {0}\nCould not run server on port {1}, is another server running on that port?", e.ErrorCode, port));
                 System.Environment.Exit(1);
             }
         }

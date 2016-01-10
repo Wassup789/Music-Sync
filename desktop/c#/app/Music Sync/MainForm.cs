@@ -25,7 +25,7 @@ namespace MusicSync
 
         protected override void SetVisibleCore(bool value)
         {
-            if (!Program.hasFormLoaded)
+            if (Program.hasFormLoaded)
             {
                 value = false;
                 if (!this.IsHandleCreated) CreateHandle();
@@ -349,7 +349,7 @@ namespace MusicSync
         }
         private void receiveFromTray()
         {
-            Program.hasFormLoaded = true;
+            Program.hasFormLoaded = false;
             this.Show();
         }
 
