@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -29,7 +30,7 @@ namespace MusicSync
         {
             if(System.Diagnostics.Process.GetProcessesByName(System.IO.Path.GetFileNameWithoutExtension(System.Reflection.Assembly.GetEntryAssembly().Location)).Count() > 1)
                 System.Environment.Exit(1);
-            if (args.Length > 0 && (args[0].ToLower() == "-f" || args[0].ToLower() == "--first-launch"))
+            if (args.Length > 0 && (args[0].ToLower() == "-s" || args[0].ToLower() == "--startup"))
                 hasFormLoaded = true;
 
             bw = new BackgroundWorker();
@@ -54,7 +55,7 @@ namespace MusicSync
                     string jsonData = File.ReadAllText(serverLocation + "settings.json");
                     settings = JsonConvert.DeserializeObject<Settings>(jsonData);
 
-                    WebServer ws = new WebServer(SendResponse, "http://localhost:" + settings.port + "/");
+                    WebServer ws = new WebServer(SendResponse, "http://" + GetServerIP() + ":" + settings.port + "/");
                     ws.Run();
 
                     status = 1;
@@ -75,7 +76,6 @@ namespace MusicSync
             Application.SetCompatibleTextRenderingDefault(false);
             MainForm form = new MainForm();
             Application.Run(form);
-            hasFormLoaded = true;
         }
 
         public static string SendResponse(HttpListenerRequest request)
@@ -182,6 +182,19 @@ namespace MusicSync
             }
             else
                 return "[false]";
+        }
+
+        public static string GetServerIP()
+        {
+            var host = Dns.GetHostEntry(Dns.GetHostName());
+            foreach (var ip in host.AddressList)
+            {
+                if (ip.AddressFamily == AddressFamily.InterNetwork)
+                {
+                    return ip.ToString();
+                }
+            }
+            return "localhost";
         }
     }
 }

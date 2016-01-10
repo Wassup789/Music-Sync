@@ -43,10 +43,10 @@ Source: "..\app\Music Sync\bin\Release\Newtonsoft.Json.xml"; DestDir: "{app}"; F
 [Icons]
 Name: "{commonprograms}\Music Sync"; Filename: "{app}\MusicSync.exe"
 Name: "{commondesktop}\Music Sync"; Filename: "{app}\MusicSync.exe"; Tasks: desktopicon
-Name: "{userstartup}\Music Sync"; Filename: "{app}\MusicSync.exe"; Tasks: startup
+Name: "{userstartup}\Music Sync"; Filename: "{app}\MusicSync.exe"; Parameters: "--startup"; Tasks: startup
 
 [Run]
-Filename: "{app}\MusicSync.exe"; Parameters: "--first-launch"; Description: "{cm:LaunchProgram,Music Sync}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\MusicSync.exe"; Description: "{cm:LaunchProgram,Music Sync}"; Flags: nowait postinstall skipifsilent
 
 [UninstallDelete]
 Type: files; Name: "{app}\settings.json"
