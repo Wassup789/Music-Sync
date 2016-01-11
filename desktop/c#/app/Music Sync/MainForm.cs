@@ -366,5 +366,11 @@ namespace MusicSync
             }
             MessageBox.Show("No local IP found, are you connected to a router?", "Error");
         }
+
+        private void systemTrayIcon_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            if(e.Button == MouseButtons.Left)
+                receiveFromTray();
+        }
     }
 }

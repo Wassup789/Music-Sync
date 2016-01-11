@@ -276,6 +276,7 @@
             this.systemTrayIcon.Icon = ((System.Drawing.Icon)(resources.GetObject("systemTrayIcon.Icon")));
             this.systemTrayIcon.Text = "Music Sync";
             this.systemTrayIcon.Visible = true;
+            this.systemTrayIcon.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.systemTrayIcon_MouseDoubleClick);
             // 
             // systemTrayMenuStrip
             // 
