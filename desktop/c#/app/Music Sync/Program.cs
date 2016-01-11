@@ -101,7 +101,7 @@ namespace MusicSync
             {
                 if (Directory.Exists(playlist.address))
                 {
-                    int fileCount = Directory.GetFiles(playlist.address, "*", SearchOption.AllDirectories).Length;
+                    int fileCount = Directory.GetFiles(playlist.address, "*", SearchOption.TopDirectoryOnly).Length;
 
                     string name_b64 = System.Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(playlist.name));
                     output.Add(new WebPlaylist(playlist.name, name_b64, fileCount));
@@ -139,7 +139,7 @@ namespace MusicSync
                 {
                     if (playlist.name == q && Directory.Exists(playlist.address))
                     {
-                        string[] files = Directory.GetFiles(playlist.address, "*", SearchOption.AllDirectories);
+                        string[] files = Directory.GetFiles(playlist.address, "*", SearchOption.TopDirectoryOnly);
                         List<WebFile> output = new List<WebFile>();
                         foreach (string file in files)
                         {
