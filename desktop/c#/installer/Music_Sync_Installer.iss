@@ -43,7 +43,9 @@ Source: "..\app\Music Sync\bin\Release\Newtonsoft.Json.xml"; DestDir: "{app}"; F
 [Icons]
 Name: "{commonprograms}\Music Sync"; Filename: "{app}\MusicSync.exe";
 Name: "{commondesktop}\Music Sync"; Filename: "{app}\MusicSync.exe"; Tasks: desktopicon
-Name: "{userstartup}\Music Sync"; Filename: "{app}\MusicSync.exe"; Parameters: "--startup"; Tasks: startup
+
+[Registry]
+Root: HKLM; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "Music Sync"; ValueData: """{app}\MusicSync.exe"" --startup"; Flags: uninsdeletevalue; Tasks: startup
 
 [Run]
 Filename: "{app}\MusicSync.exe"; Description: "{cm:LaunchProgram,Music Sync}"; Flags: nowait postinstall skipifsilent
