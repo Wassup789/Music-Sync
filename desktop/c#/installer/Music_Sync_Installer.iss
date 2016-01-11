@@ -31,7 +31,7 @@ UninstallDisplayIcon={app}\MusicSync.exe
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]                                                                                           
-Name: "startup"; Description: "Run on Windows Startup"; GroupDescription: "Startup:"; Flags: checkedonce
+Name: "startup"; Description: "Run on Windows Startup"; GroupDescription: "Startup:";
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
@@ -41,7 +41,7 @@ Source: "..\app\Music Sync\bin\Release\Newtonsoft.Json.xml"; DestDir: "{app}"; F
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
-Name: "{commonprograms}\Music Sync"; Filename: "{app}\MusicSync.exe"
+Name: "{commonprograms}\Music Sync"; Filename: "{app}\MusicSync.exe";
 Name: "{commondesktop}\Music Sync"; Filename: "{app}\MusicSync.exe"; Tasks: desktopicon
 Name: "{userstartup}\Music Sync"; Filename: "{app}\MusicSync.exe"; Parameters: "--startup"; Tasks: startup
 
