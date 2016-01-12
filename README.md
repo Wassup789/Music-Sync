@@ -20,10 +20,10 @@ This project requires the installation of:
  - OR
  - [Nginx](http://nginx.org/en/) (or [Apache2](https://httpd.apache.org/) with [mod_xsendfile](https://tn123.org/mod_xsendfile/)) with [PHP](https://secure.php.net/)
 
- - An Android phone
+ - An Android device
 
 ## Downloads
-**Latest Version:** ***[v1.0.0.0][Dld_Latest]***
+**Latest Version:** ***[v1.0.0.1][Dld_Latest]***
 
 **Release Archive:**
 
