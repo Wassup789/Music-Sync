@@ -259,6 +259,7 @@ namespace MusicSync
             startServerButton.Enabled = false;
             stopServerButton.Enabled = false;
             restartServerButton.Enabled = false;
+            getServerIPButton.Enabled = false;
 
             waitingForServerStop = true;
             Program.bw.CancelAsync();
@@ -302,11 +303,13 @@ namespace MusicSync
                         startServerButton.Enabled = true;
                         stopServerButton.Enabled = false;
                         restartServerButton.Enabled = false;
+                        getServerIPButton.Enabled = false;
                         break;
                     case "Running":
                         startServerButton.Enabled = false;
                         stopServerButton.Enabled = true;
                         restartServerButton.Enabled = true;
+                        getServerIPButton.Enabled = true;
                         break;
                 }
             }
@@ -352,6 +355,7 @@ namespace MusicSync
             Program.hasFormLoaded = false;
             this.Show();
         }
+        //END OF SYSTEM TRAY
 
         private void getServerIPButton_Click(object sender, EventArgs e)
         {
@@ -360,11 +364,17 @@ namespace MusicSync
             {
                 if (ip.AddressFamily == AddressFamily.InterNetwork)
                 {
-                    MessageBox.Show(ip + ":" + settings.port, "Server IP");
+                    showIPDialog("http://" + ip + ":" + settings.port);
                     return;
                 }
             }
-            MessageBox.Show("No local IP found, are you connected to a router?", "Error");
+            showIPDialog("No local IP found, are you connected to a router?", "Error");
+        }
+
+        public void showIPDialog(string message, string title = "Server IP")
+        {
+            IPDialog ipDialog = new IPDialog(message, title);
+            ipDialog.ShowDialog();
         }
 
         private void systemTrayIcon_MouseDoubleClick(object sender, MouseEventArgs e)

@@ -26,6 +26,7 @@ WizardImageFile=Images\WizardImageFile.bmp
 PrivilegesRequired=admin
 DisableWelcomePage=no
 UninstallDisplayIcon={app}\MusicSync.exe
+CloseApplications=force
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -54,3 +55,6 @@ Filename: "{app}\MusicSync.exe"; Description: "{cm:LaunchProgram,Music Sync}"; F
 Type: files; Name: "{app}\settings.json"
 Type: dirifempty; Name: "{userappdata}\Wassup789\Music Sync"
 Type: dirifempty; Name: "{userappdata}\Wassup789"
+
+[UninstallRun]
+Filename: {cmd}; Parameters: /c taskkill /f /im MusicSync.exe; Flags: runhidden

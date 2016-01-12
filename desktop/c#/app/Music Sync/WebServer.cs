@@ -77,7 +77,6 @@ namespace MusicSync
 
                                     int startByte = 0;
                                     int endByte = (int)fs.Length;
-                                    byte[] buffer;
                                     if (ctx.Request.Headers["range"] != null)
                                     {
                                         string rangeHeader = ctx.Request.Headers["range"].Replace("bytes=", "");
@@ -86,29 +85,17 @@ namespace MusicSync
                                         if (range[1].Trim().Length > 0) int.TryParse(range[1], out endByte);
                                         if (endByte == -1) endByte = (int)fs.Length;
 
-                                        buffer = new byte[endByte - startByte];
+                                        byte[] buffer = new byte[endByte - startByte];
                                         int totalCount = startByte + buffer.Length;
 
                                         ctx.Response.StatusCode = 206;
                                         ctx.Response.Headers.Set("Accept-Ranges", "bytes");
                                         ctx.Response.Headers.Set("Content-Range", string.Format("bytes {0}-{1}/{2}", startByte, totalCount - 1, totalCount));
                                         ctx.Response.Headers.Set("Connection", "keep-alive");
-                                        //ctx.Response.Headers.Set("Content-Length", (totalCount - startByte).ToString());
                                     }
-                                    else
-                                        buffer = new byte[64 * 1024];
-
-                                    int read;
-                                    using (BinaryWriter bw = new BinaryWriter(ctx.Response.OutputStream))
-                                    {
-                                        while ((read = fs.Read(buffer, startByte, endByte)) > 0)
-                                        {
-                                            bw.Write(buffer, 0, read);
-                                            bw.Flush();
-                                        }
-
-                                        bw.Close();
-                                    }
+                                    byte[] buf = File.ReadAllBytes(rstr).Skip(startByte).Take(endByte - startByte).ToArray();
+                                    ctx.Response.ContentLength64 = buf.Length;
+                                    ctx.Response.OutputStream.Write(buf, 0, buf.Length);
                                 }
                                 else
                                 {

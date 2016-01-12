@@ -14,8 +14,8 @@ $dir = new DirectoryIterator("media/" . $q . "/");
 $output = array();
 
 foreach ($dir as $fileinfo) {
-    if (!$fileinfo->isDot() && $fileinfo->getFilename() != ".gitignore") {
-		$fileloc = "media/" . $q . "/" . $fileinfo->getFilename();
+	$fileloc = "media/" . $q . "/" . $fileinfo->getBasename();
+    if (!$fileinfo->isDot() && $fileinfo->getFilename() != ".gitignore" && file_exists($fileloc)) {
 		//$hash = md5_file($fileloc);
 		$filesize = filesize($fileloc);
 		array_push($output, array(
@@ -26,5 +26,6 @@ foreach ($dir as $fileinfo) {
         //echo($fileinfo->getFilename() . ";$filesize\n");
     }
 }
+
 $output = json_encode($output);
 print_r($output);
