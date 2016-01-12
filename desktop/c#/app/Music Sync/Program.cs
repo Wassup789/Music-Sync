@@ -61,10 +61,7 @@ namespace MusicSync
                     status = 1;
                     bw.ReportProgress(0);
 
-                    while (!bw.CancellationPending)
-                    {
-
-                    }
+                    while (!bw.CancellationPending) {}
                     ws.Stop();
 
                     status = 0;

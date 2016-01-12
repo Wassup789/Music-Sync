@@ -3,8 +3,8 @@ $dir = new DirectoryIterator("media");
 $output = array();
 
 foreach ($dir as $fileinfo) {
-    if (!$fileinfo->isDot() && $fileinfo->isDir()) {
-		$fileloc = "media/" . $fileinfo->getFilename();
+	$fileloc = "media/" . $fileinfo->getFilename();
+    if (!$fileinfo->isDot() && $fileinfo->isDir() && file_exists($fileloc)) {
 		$directoryInfo = new FilesystemIterator("media/" . $fileinfo->getFilename(), FilesystemIterator::SKIP_DOTS);
 		$filesize = filesize($fileloc);
 		array_push($output, array(
