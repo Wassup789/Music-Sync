@@ -1,4 +1,5 @@
 ﻿using MusicSync.JSONObjects;
+using NetFwTypeLib;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -15,7 +16,7 @@ namespace MusicSync
     public partial class MainForm : Form
     {
         private static Settings settings;
-        private string serverLocation = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\Wassup789\\Music Sync\\";
+        private string serverLocation = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\Wassup789\Music Sync\";
         private bool waitingForServerStop = false;
 
         public MainForm()
@@ -36,10 +37,7 @@ namespace MusicSync
         private void MainForm_Load(object sender, EventArgs e)
         {
             refreshSettings();
-
-            Program.bw.ProgressChanged += new ProgressChangedEventHandler(bw_ProgressChanged);
-            Program.bw.RunWorkerCompleted += new RunWorkerCompletedEventHandler(bw_WorkerCompleted);
-            bw_ProgressChanged(null, null);
+            //firewallRequest();
         }
 
         private void refreshSettings()
@@ -83,7 +81,7 @@ namespace MusicSync
                 resetPlaylistListView();
             }
         }
-
+        
         private void savePortButton_Click(object sender, EventArgs e)
         {
             savePort();
@@ -243,46 +241,48 @@ namespace MusicSync
 
         private void startServer(object sender, EventArgs e)
         {
-            if(!Program.bw.IsBusy)
-                Program.bw.RunWorkerAsync();
+            if(!Program.ws.IsRunning())
+                Program.ws.Start();
         }
 
         private void stopServer(object sender, EventArgs e)
         {
-            if (Program.bw.IsBusy)
-                Program.bw.CancelAsync();
+            if(Program.ws.IsRunning())
+                Program.ws.Stop();
         }
 
         private void restartServer(object sender, EventArgs e)
         {
-            serverStatusText.Text = "Restarting";
-            startServerButton.Enabled = false;
-            stopServerButton.Enabled = false;
-            restartServerButton.Enabled = false;
-            getServerIPButton.Enabled = false;
+            SetStatusText("Restarting");
 
             waitingForServerStop = true;
-            Program.bw.CancelAsync();
+            if (Program.ws.IsRunning())
+            {
+                waitingForServerStop = true;
+                Program.ws.Stop();
+            }
+            else
+            {
+                waitingForServerStop = false;
+                Program.ws.Start();
+            }
         }
 
-        private void bw_ProgressChanged(object sender, EventArgs e)
+        public void onWebServerStatusChange(int num)
         {
-            switch (Program.status)
+            switch (num)
             {
                 case 0:
                     SetStatusText("Stopped");
+                    if (waitingForServerStop)
+                    {
+                        waitingForServerStop = false;
+                        Program.ws.Start();
+                    }
                     break;
                 case 1:
                     SetStatusText("Running");
                     break;
-            }
-        }
-        private void bw_WorkerCompleted(object sender, EventArgs e)
-        {
-            if (waitingForServerStop)
-            {
-                waitingForServerStop = false;
-                Program.bw.RunWorkerAsync();
             }
         }
 
@@ -310,6 +310,12 @@ namespace MusicSync
                         stopServerButton.Enabled = true;
                         restartServerButton.Enabled = true;
                         getServerIPButton.Enabled = true;
+                        break;
+                    case "Restarting":
+                        startServerButton.Enabled = false;
+                        stopServerButton.Enabled = false;
+                        restartServerButton.Enabled = false;
+                        getServerIPButton.Enabled = false;
                         break;
                 }
             }

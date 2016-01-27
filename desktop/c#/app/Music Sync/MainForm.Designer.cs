@@ -30,10 +30,6 @@
         {
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
-            this.settingsGroupBox = new System.Windows.Forms.GroupBox();
-            this.savePortButton = new System.Windows.Forms.Button();
-            this.portInput = new System.Windows.Forms.NumericUpDown();
-            this.label1 = new System.Windows.Forms.Label();
             this.serverGroupBox = new System.Windows.Forms.GroupBox();
             this.getServerIPButton = new System.Windows.Forms.Button();
             this.serverStatusText = new System.Windows.Forms.Label();
@@ -54,68 +50,16 @@
             this.systemTrayMenuOptions = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.systemTrayMenuQuit = new System.Windows.Forms.ToolStripMenuItem();
-            this.settingsGroupBox.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.portInput)).BeginInit();
+            this.label1 = new System.Windows.Forms.Label();
+            this.portInput = new System.Windows.Forms.NumericUpDown();
+            this.savePortButton = new System.Windows.Forms.Button();
+            this.settingsGroupBox = new System.Windows.Forms.GroupBox();
             this.serverGroupBox.SuspendLayout();
             this.playlistsGroupBox.SuspendLayout();
             this.systemTrayMenuStrip.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.portInput)).BeginInit();
+            this.settingsGroupBox.SuspendLayout();
             this.SuspendLayout();
-            // 
-            // settingsGroupBox
-            // 
-            this.settingsGroupBox.Controls.Add(this.savePortButton);
-            this.settingsGroupBox.Controls.Add(this.portInput);
-            this.settingsGroupBox.Controls.Add(this.label1);
-            this.settingsGroupBox.Location = new System.Drawing.Point(12, 126);
-            this.settingsGroupBox.Name = "settingsGroupBox";
-            this.settingsGroupBox.Size = new System.Drawing.Size(198, 78);
-            this.settingsGroupBox.TabIndex = 0;
-            this.settingsGroupBox.TabStop = false;
-            this.settingsGroupBox.Text = "Settings";
-            // 
-            // savePortButton
-            // 
-            this.savePortButton.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.savePortButton.Location = new System.Drawing.Point(113, 49);
-            this.savePortButton.Name = "savePortButton";
-            this.savePortButton.Size = new System.Drawing.Size(75, 23);
-            this.savePortButton.TabIndex = 2;
-            this.savePortButton.Text = "Save";
-            this.savePortButton.UseVisualStyleBackColor = true;
-            this.savePortButton.Click += new System.EventHandler(this.savePortButton_Click);
-            // 
-            // portInput
-            // 
-            this.portInput.Location = new System.Drawing.Point(41, 23);
-            this.portInput.Maximum = new decimal(new int[] {
-            65536,
-            0,
-            0,
-            0});
-            this.portInput.Minimum = new decimal(new int[] {
-            1025,
-            0,
-            0,
-            0});
-            this.portInput.Name = "portInput";
-            this.portInput.Size = new System.Drawing.Size(147, 20);
-            this.portInput.TabIndex = 1;
-            this.portInput.Value = new decimal(new int[] {
-            13163,
-            0,
-            0,
-            0});
-            // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(6, 25);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(29, 13);
-            this.label1.TabIndex = 0;
-            this.label1.Text = "Port:";
             // 
             // serverGroupBox
             // 
@@ -134,6 +78,7 @@
             // 
             // getServerIPButton
             // 
+            this.getServerIPButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.getServerIPButton.Location = new System.Drawing.Point(95, 77);
             this.getServerIPButton.Name = "getServerIPButton";
             this.getServerIPButton.Size = new System.Drawing.Size(75, 23);
@@ -162,6 +107,7 @@
             // 
             // restartServerButton
             // 
+            this.restartServerButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.restartServerButton.Location = new System.Drawing.Point(14, 77);
             this.restartServerButton.Name = "restartServerButton";
             this.restartServerButton.Size = new System.Drawing.Size(75, 23);
@@ -172,6 +118,7 @@
             // 
             // stopServerButton
             // 
+            this.stopServerButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.stopServerButton.Location = new System.Drawing.Point(14, 48);
             this.stopServerButton.Name = "stopServerButton";
             this.stopServerButton.Size = new System.Drawing.Size(75, 23);
@@ -182,6 +129,7 @@
             // 
             // startServerButton
             // 
+            this.startServerButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.startServerButton.Location = new System.Drawing.Point(14, 19);
             this.startServerButton.Name = "startServerButton";
             this.startServerButton.Size = new System.Drawing.Size(75, 23);
@@ -206,6 +154,7 @@
             // 
             // editPlaylistButton
             // 
+            this.editPlaylistButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.editPlaylistButton.Location = new System.Drawing.Point(87, 163);
             this.editPlaylistButton.Name = "editPlaylistButton";
             this.editPlaylistButton.Size = new System.Drawing.Size(75, 23);
@@ -216,6 +165,7 @@
             // 
             // savePlaylistButton
             // 
+            this.savePlaylistButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.savePlaylistButton.Location = new System.Drawing.Point(283, 163);
             this.savePlaylistButton.Name = "savePlaylistButton";
             this.savePlaylistButton.Size = new System.Drawing.Size(75, 23);
@@ -226,6 +176,7 @@
             // 
             // deletePlaylistButton
             // 
+            this.deletePlaylistButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.deletePlaylistButton.Location = new System.Drawing.Point(168, 163);
             this.deletePlaylistButton.Name = "deletePlaylistButton";
             this.deletePlaylistButton.Size = new System.Drawing.Size(75, 23);
@@ -236,6 +187,7 @@
             // 
             // addPlaylistButton
             // 
+            this.addPlaylistButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.addPlaylistButton.Location = new System.Drawing.Point(6, 163);
             this.addPlaylistButton.Name = "addPlaylistButton";
             this.addPlaylistButton.Size = new System.Drawing.Size(75, 23);
@@ -247,6 +199,8 @@
             // playlistListView
             // 
             this.playlistListView.Activation = System.Windows.Forms.ItemActivation.OneClick;
+            this.playlistListView.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left)));
             this.playlistListView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.columnHeader1,
             this.columnHeader2});
@@ -307,6 +261,60 @@
             this.systemTrayMenuQuit.Text = "Quit";
             this.systemTrayMenuQuit.Click += new System.EventHandler(this.systemTrayMenuQuit_Click);
             // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(6, 25);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(29, 13);
+            this.label1.TabIndex = 0;
+            this.label1.Text = "Port:";
+            // 
+            // portInput
+            // 
+            this.portInput.Location = new System.Drawing.Point(41, 23);
+            this.portInput.Maximum = new decimal(new int[] {
+            65536,
+            0,
+            0,
+            0});
+            this.portInput.Minimum = new decimal(new int[] {
+            1025,
+            0,
+            0,
+            0});
+            this.portInput.Name = "portInput";
+            this.portInput.Size = new System.Drawing.Size(147, 20);
+            this.portInput.TabIndex = 1;
+            this.portInput.Value = new decimal(new int[] {
+            13163,
+            0,
+            0,
+            0});
+            // 
+            // savePortButton
+            // 
+            this.savePortButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.savePortButton.Location = new System.Drawing.Point(113, 49);
+            this.savePortButton.Name = "savePortButton";
+            this.savePortButton.Size = new System.Drawing.Size(75, 23);
+            this.savePortButton.TabIndex = 2;
+            this.savePortButton.Text = "Save";
+            this.savePortButton.UseVisualStyleBackColor = true;
+            this.savePortButton.Click += new System.EventHandler(this.savePortButton_Click);
+            // 
+            // settingsGroupBox
+            // 
+            this.settingsGroupBox.Controls.Add(this.savePortButton);
+            this.settingsGroupBox.Controls.Add(this.portInput);
+            this.settingsGroupBox.Controls.Add(this.label1);
+            this.settingsGroupBox.Location = new System.Drawing.Point(12, 126);
+            this.settingsGroupBox.Name = "settingsGroupBox";
+            this.settingsGroupBox.Size = new System.Drawing.Size(198, 78);
+            this.settingsGroupBox.TabIndex = 0;
+            this.settingsGroupBox.TabStop = false;
+            this.settingsGroupBox.Text = "Settings";
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -324,22 +332,18 @@
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainForm_FormClosing);
             this.Load += new System.EventHandler(this.MainForm_Load);
             this.Resize += new System.EventHandler(this.MainForm_Resize);
-            this.settingsGroupBox.ResumeLayout(false);
-            this.settingsGroupBox.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.portInput)).EndInit();
             this.serverGroupBox.ResumeLayout(false);
             this.serverGroupBox.PerformLayout();
             this.playlistsGroupBox.ResumeLayout(false);
             this.systemTrayMenuStrip.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.portInput)).EndInit();
+            this.settingsGroupBox.ResumeLayout(false);
+            this.settingsGroupBox.PerformLayout();
             this.ResumeLayout(false);
 
         }
 
         #endregion
-
-        private System.Windows.Forms.GroupBox settingsGroupBox;
-        private System.Windows.Forms.NumericUpDown portInput;
-        private System.Windows.Forms.Label label1;
         private System.Windows.Forms.GroupBox serverGroupBox;
         private System.Windows.Forms.Label serverStatusText;
         private System.Windows.Forms.Label serverStatusLabel;
@@ -348,7 +352,6 @@
         private System.Windows.Forms.Button startServerButton;
         private System.Windows.Forms.GroupBox playlistsGroupBox;
         private System.Windows.Forms.ListView playlistListView;
-        private System.Windows.Forms.Button savePortButton;
         private System.Windows.Forms.Button savePlaylistButton;
         private System.Windows.Forms.Button deletePlaylistButton;
         private System.Windows.Forms.Button addPlaylistButton;
@@ -361,6 +364,10 @@
         private System.Windows.Forms.ToolStripMenuItem systemTrayMenuQuit;
         private System.Windows.Forms.ToolStripMenuItem systemTrayMenuOptions;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.NumericUpDown portInput;
+        private System.Windows.Forms.Button savePortButton;
+        private System.Windows.Forms.GroupBox settingsGroupBox;
     }
 }
 

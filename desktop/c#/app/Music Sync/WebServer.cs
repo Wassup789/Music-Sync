@@ -13,9 +13,11 @@ namespace MusicSync
         private readonly HttpListener _listener = new HttpListener();
         private readonly Func<HttpListenerRequest, string> _responderMethod;
         private int port = -1;
+        private MainForm mainForm;
 
-        public WebServer(string[] prefixes, Func<HttpListenerRequest, string> method)
+        public WebServer(Func<HttpListenerRequest, string> method, MainForm form, params string[] prefixes)
         {
+            mainForm = form;
             if (!HttpListener.IsSupported)
                 throw new NotSupportedException(
                     "Needs Windows XP SP2, Server 2003 or later.");
@@ -46,14 +48,11 @@ namespace MusicSync
             }
         }
 
-        public WebServer(Func<HttpListenerRequest, string> method, params string[] prefixes)
-            : this(prefixes, method)
-        { }
-
         public void Run()
         {
             ThreadPool.QueueUserWorkItem((o) =>
             {
+                mainForm.onWebServerStatusChange(1);
                 Console.WriteLine("Server running on port " + port);
                 try
                 {
@@ -117,10 +116,24 @@ namespace MusicSync
             });
         }
 
+        public void Start()
+        {
+            _listener.Start();
+            Run();
+            mainForm.onWebServerStatusChange(1);
+        }
+
         public void Stop()
         {
             _listener.Stop();
-            _listener.Close();
+            mainForm.onWebServerStatusChange(0);
+        }
+
+        public bool IsRunning()
+        {
+            if (_listener.IsListening)
+                return true;
+            return false;
         }
     }
 }
