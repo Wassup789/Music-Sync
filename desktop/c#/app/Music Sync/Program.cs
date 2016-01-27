@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -21,10 +22,10 @@ namespace MusicSync
         static ManualResetEvent quitEvent = new ManualResetEvent(false);
 
         private static Settings settings;
-        public static BackgroundWorker bw;
-        public static int status = 0;
         public static bool hasFormLoaded = false;
+        public static WebServer ws;
 
+        
         [STAThread]
         static void Main(string[] args)
         {
@@ -32,49 +33,34 @@ namespace MusicSync
                 System.Environment.Exit(1);
             if (args.Length > 0 && (args[0].ToLower() == "-s" || args[0].ToLower() == "--startup"))
                 hasFormLoaded = true;
+            
+            if (!Directory.Exists(serverLocation))
+            {
+                Directory.CreateDirectory(serverLocation);
+            }
+            if (!File.Exists(serverLocation + "settings.json"))
+            {
+                Debug.WriteLine("Could not find settings.json, generating a new file");
 
-            bw = new BackgroundWorker();
-            bw.WorkerReportsProgress = true;
-            bw.WorkerSupportsCancellation = true;
-            bw.DoWork += new DoWorkEventHandler(
-                delegate (object o, DoWorkEventArgs args1)
-                {
-                    if (!Directory.Exists(serverLocation))
-                    {
-                        Directory.CreateDirectory(serverLocation);
-                    }
-                    if (!File.Exists(serverLocation + "settings.json"))
-                    {
-                        Debug.WriteLine("Could not find settings.json, generating a new file");
-                        
-                        string settingsString = "{\r\n   \"port\": 13163,\r\n   \"playlists\": []\r\n}";
-                        System.IO.StreamWriter file = new System.IO.StreamWriter(serverLocation + "settings.json");
-                        file.WriteLine(settingsString);
-                        file.Close();
-                    }
-                    string jsonData = File.ReadAllText(serverLocation + "settings.json");
-                    settings = JsonConvert.DeserializeObject<Settings>(jsonData);
+                string settingsString = "{\r\n   \"port\": 13163,\r\n   \"playlists\": []\r\n}";
+                System.IO.StreamWriter file = new System.IO.StreamWriter(serverLocation + "settings.json");
+                file.WriteLine(settingsString);
+                file.Close();
+            }
+            string jsonData = File.ReadAllText(serverLocation + "settings.json");
+            settings = JsonConvert.DeserializeObject<Settings>(jsonData);
 
-                    WebServer ws = new WebServer(SendResponse, "http://" + GetServerIP() + ":" + settings.port + "/");
-                    ws.Run();
-
-                    status = 1;
-                    bw.ReportProgress(0);
-
-                    while (!bw.CancellationPending) {}
-                    ws.Stop();
-
-                    status = 0;
-                    bw.ReportProgress(1);
-                });
-            bw.RunWorkerAsync();
 
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             MainForm form = new MainForm();
+
+            ws = new WebServer(SendResponse, form, "http://" + GetServerIP() + ":" + settings.port + "/");
+            ws.Run();
+
             Application.Run(form);
         }
-
+        
         public static string SendResponse(HttpListenerRequest request)
         {
             switch (request.Url.LocalPath)
@@ -87,6 +73,9 @@ namespace MusicSync
                     return GetFiles(request.QueryString);
                 case "/download.php":
                     return GetDownload(request.QueryString);
+                case "/version.php":
+                    Version v = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+                    return "[" + v.Major + "," + v.Minor + "," + v.Build + "," + v.Revision + "]";
             }
             return "<a href=\"https://github.com/Wassup789/Music-Sync\">Music Sync by Wassup789</a>";
         }

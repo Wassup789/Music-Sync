@@ -7,7 +7,7 @@
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
 AppId={{4F95EEBB-93EF-44CD-9869-16B6D7130E1A}
 AppName=Music Sync
-AppVersion=1.0.0.0
+AppVersion=1.0.0.2
 AppVerName=Music Sync
 AppPublisher=Wassup789
 AppPublisherURL=https://github.com/Wassup789/Music-Sync/
