@@ -114,7 +114,7 @@ public class BackgroundService extends Service {
     private TimerTask timerTask = new TimerTask() {
         @Override
         public void run() {
-            removeOldPlaylists();
+            //removeOldPlaylists();
             String[] playlists = new Gson().fromJson(settings.getString("playlists", SettingsFragment.default_playlists), String[].class);
             for(int i = 0; i < playlists.length; i++){
                 if(playlists[i].equals(SettingsFragment.default_playlist))
@@ -136,21 +136,23 @@ public class BackgroundService extends Service {
                 return new File(current, name).isDirectory();
             }
         });
-        for(int i = 0; i < directories.length; i++) {
-            Boolean isValid = false;
-            for(int ii = 0; ii < playlists.length; ii++) {
-                if(directories[i].equals(playlists[ii])) {
-                    isValid = true;
-                    break;
+        if(playlists.length > 0) {
+            for (int i = 0; i < directories.length; i++) {
+                Boolean isValid = false;
+                for (int ii = 0; ii < playlists.length; ii++) {
+                    if (directories[i].equals(playlists[ii])) {
+                        isValid = true;
+                        break;
+                    }
                 }
-            }
-            if(!isValid){
-                File removeDir = new File(mediaDirectory + directories[i]);
-                File[] removeFiles = removeDir.listFiles();
-                for(int ii = 0; ii < removeFiles.length; ii++){
-                    removeFiles[ii].delete();
+                if (!isValid) {
+                    File removeDir = new File(mediaDirectory + directories[i]);
+                    File[] removeFiles = removeDir.listFiles();
+                    for (int ii = 0; ii < removeFiles.length; ii++) {
+                        removeFiles[ii].delete();
+                    }
+                    removeDir.delete();
                 }
-                removeDir.delete();
             }
         }
     }
@@ -196,7 +198,7 @@ public class BackgroundService extends Service {
             Gson gson = new GsonBuilder().create();
             Boolean[] doesPlaylistExist = gson.fromJson(data, Boolean[].class);
             if(!doesPlaylistExist[0]) {
-                Log.i("BackgroundService", "Playlist: \"" + playlistName + "\" does not exist, skipping playlist");
+                Log.i("BackgroundService", String.format("Playlist: \"%s\" does not exist, skipping playlist", playlistName));
                 return;
             }
 
@@ -232,7 +234,7 @@ public class BackgroundService extends Service {
             sendMessage(100, "Removing Files");
             //Remove files not in the original folder
             for (int i = 0; i < filesRemove.size(); i++) {
-                Log.i("BackgroundService", "Deleting file: \"" + filesRemove.get(i).getName() + "\"");
+                Log.i("BackgroundService", String.format("Deleting file: \"%s\"", filesRemove.get(i).getName()));
                 filesRemove.get(i).delete();
             }
 
@@ -252,22 +254,22 @@ public class BackgroundService extends Service {
             notificationManager.cancel(notificationIDComplete);
             notificationManager.cancel(notificationIDPermMissing);
 
-            Log.i("BackgroundService", "Start download of " + output.size() + " file(s)");
-            sendMessage(100, "Downloading " + output.size() + " file(s)");
+            Log.i("BackgroundService", String.format("Start download of %d file(s)", output.size()));
+            sendMessage(100, String.format("Downloading %d file(s)", output.size()));
 
             for (int i = 0; i < output.size(); i++) {
                 try {
-                    sendMessage(101, "" + (output.size() - i) + " (" + Math.round(((double) i / output.size()) * 100) + "% downloaded)");
+                    sendMessage(101, String.format("%d (%d%% downloaded)", (output.size() - i), (int)Math.round(((double) i / output.size()) * 100)));
                     sendMessage(102, output.get(i).name);
                     if (failedDownloads > 0)
-                        failedDownloadString = "\n" + failedDownloads + " files failed to download";
+                        failedDownloadString = String.format("\n%d files failed to download", failedDownloads);
                     NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this)
                             .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.drawable.ic_file_download_black_48dp))
                             .setSmallIcon(R.drawable.ic_file_download_black_48dp)
                             .setContentTitle("Downloading Music...")
                             .setContentText((i - failedDownloads) + "/" + (output.size() - failedDownloads) + " files downloaded")
                             .setStyle(new NotificationCompat.BigTextStyle()
-                                            .bigText((i - failedDownloads) + "/" + (output.size() - failedDownloads) + " files downloaded" + failedDownloadString)
+                                            .bigText(String.format("%d/%d files downloaded%s", (i - failedDownloads), (output.size() - failedDownloads), failedDownloadString))
                                             .setSummaryText(output.get(i).name)
                             )
                             .setProgress(output.size(), i, false)
@@ -275,7 +277,7 @@ public class BackgroundService extends Service {
 
                     notificationManager.notify(notificationID, mBuilder.build());
 
-                    Log.i("BackgroundService", "Downloading: \"" + output.get(i).name + "\"");
+                    Log.i("BackgroundService", String.format("Downloading: \"%s\"", output.get(i).name));
 
                     URL downloadUrl = new URL(serverUrl + "download.php?q=" + output.get(i).name_b64);
                     URLConnection connection = downloadUrl.openConnection();
@@ -294,8 +296,8 @@ public class BackgroundService extends Service {
                     outputs.close();
                     inputs.close();
                 } catch (FileNotFoundException e) {
-                    Log.w("BackgroundService", "File: \"" + output.get(i).name + "\" failed to download");
-                    Log.w("BackgroundService", "URL: " + serverUrl + "download.php?q=" + output.get(i).name_b64);
+                    Log.w("BackgroundService", String.format("File: \"%s\" failed to download", output.get(i).name));
+                    Log.w("BackgroundService", String.format("URL: %sdownload.php?q=%s", serverUrl, output.get(i).name_b64));
                     failedDownloads++;
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -304,16 +306,16 @@ public class BackgroundService extends Service {
             sendMessage(101, "");
 
             if (failedDownloads > 0)
-                failedDownloadString = "\n" + failedDownloads + " files failed to download";
+                failedDownloadString = String.format("\n%d files failed to download", failedDownloads);
 
             notificationManager.cancel(notificationID);
             NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this)
                     .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.drawable.ic_file_download_black_48dp))
                     .setSmallIcon(R.drawable.ic_file_download_black_48dp)
                     .setContentTitle("Download Complete")
-                    .setContentText((output.size() - failedDownloads) + " files downloaded")
+                    .setContentText(String.format("%d files downloaded", (output.size() - failedDownloads)))
                     .setStyle(new NotificationCompat.BigTextStyle()
-                                    .bigText((output.size() - failedDownloads) + " files downloaded" + failedDownloadString)
+                                    .bigText(String.format("%d files downloaded%s", (output.size() - failedDownloads), failedDownloadString))
                     );
             notificationManager.notify(notificationIDComplete, mBuilder.build());
 
@@ -349,7 +351,7 @@ public class BackgroundService extends Service {
                     String duration = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
                     mmr.release();
 
-                    bufferedWriter.write("#EXTINF:" + duration + ", " + artist + " - " + title);
+                    bufferedWriter.write(String.format("#EXTINF:%s, %s - %s", duration, artist, title));
                     bufferedWriter.newLine();
                     bufferedWriter.write((mediaDirectory + playlistName + "/" + mediaFiles[i].getName()).toString());
                     bufferedWriter.newLine();
