@@ -23,7 +23,7 @@
                 android:layout_height="match_parent"
                 android:id="@+id/gridlayout"
                 android:columnCount="3"
-                android:rowCount="6"
+                android:rowCount="8"
                 android:columnOrderPreserved="false">
 
                 <Button
@@ -109,12 +109,24 @@
                 <Button
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:text="@string/removeoldplaylistfiles_label"
+                    android:id="@+id/removeOldPlaylistFilesButton"
+                    android:layout_below="@+id/refreshIntervalLabel"
+                    android:layout_alignParentStart="true"
+                    android:layout_alignParentEnd="true"
+                    android:layout_row="5"
+                    android:layout_column="0"
+                    android:layout_columnSpan="3" />
+
+                <Button
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
                     android:text="@string/removeallfiles_label"
                     android:id="@+id/removeAllFilesButton"
                     android:layout_below="@+id/refreshIntervalLabel"
                     android:layout_alignParentStart="true"
                     android:layout_alignParentEnd="true"
-                    android:layout_row="5"
+                    android:layout_row="6"
                     android:layout_column="0"
                     android:layout_columnSpan="3" />
 

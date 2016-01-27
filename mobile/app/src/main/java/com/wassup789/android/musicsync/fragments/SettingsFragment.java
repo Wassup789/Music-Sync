@@ -1,18 +1,13 @@
 package com.wassup789.android.musicsync.fragments;
 
 import android.app.NotificationManager;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
-import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.content.Context;
-import android.hardware.ConsumerIrManager;
 import android.os.Bundle;
-import android.text.Editable;
 import android.text.InputType;
-import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,7 +15,6 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
-import android.widget.ListView;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -33,12 +27,12 @@ import com.google.gson.reflect.TypeToken;
 import com.wassup789.android.musicsync.BackgroundService;
 import com.wassup789.android.musicsync.MainActivity;
 import com.wassup789.android.musicsync.R;
-import com.wassup789.android.musicsync.objectClasses.MediaInformation;
 import com.wassup789.android.musicsync.objectClasses.PlaylistInformation;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
@@ -54,6 +48,7 @@ public class SettingsFragment extends Fragment{
     public static final String default_playlists = new Gson().toJson(new String[]{default_playlist});// Refreshes every 5 minutes
 
     public MaterialDialog playlistsDialog;
+    public MaterialDialog oldPlaylistsDialog;
 
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_settings, container, false);
@@ -114,7 +109,7 @@ public class SettingsFragment extends Fragment{
 
                                 if(!url.endsWith("/"))
                                     url += "/";
-                                Log.i("SettingsFragment", url);
+                                Log.i("SettingsFragment", String.format("Set server to: %s", url));
 
                                 SharedPreferences.Editor settingsEditor = settings.edit();
                                 settingsEditor.putString("server", url);
@@ -225,6 +220,88 @@ public class SettingsFragment extends Fragment{
             }
         });
 
+        Button removeOldPlaylistFilesButton = (Button) view.findViewById(R.id.removeOldPlaylistFilesButton);
+        removeOldPlaylistFilesButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                oldPlaylistsDialog = new MaterialDialog.Builder(getActivity())
+                        .title(R.string.dialog_removingoldplaylists)
+                        .content(R.string.dialog_wait)
+                        .progress(true, 0)
+                        .show();
+
+                new RemoveOldPlaylistsAsync().execute();
+            }
+        });
+
+    }
+
+    public class RemoveOldPlaylistsAsync extends AsyncTask<Void, Void, Void> {
+        protected Void doInBackground(Void... strings) {
+            removeOldPlaylists();
+            return null;
+        }
+
+        protected void onProgressUpdate(Integer... progress) {}
+        protected void onPostExecute(Long result) {}
+    }
+
+    public void removeOldPlaylists(){
+        long startTime = System.nanoTime();
+        SharedPreferences settings = getActivity().getSharedPreferences("settings", Context.MODE_PRIVATE);
+        String[] playlists = new Gson().fromJson(settings.getString("playlists", SettingsFragment.default_playlists), String[].class);
+        File f = new File(BackgroundService.mediaDirectory);
+        String[] directories = f.list(new FilenameFilter() {
+            @Override
+            public boolean accept(File current, String name) {
+                return new File(current, name).isDirectory();
+            }
+        });
+        int playlistsDeleted = 0;
+        if(playlists.length > 0) {
+            for (int i = 0; i < directories.length; i++) {
+                Boolean isValid = false;
+                for (int ii = 0; ii < playlists.length; ii++) {
+                    if (directories[i].equals(playlists[ii])) {
+                        isValid = true;
+                        break;
+                    }
+                }
+                if (!isValid) {
+                    File removeDir = new File(BackgroundService.mediaDirectory + directories[i]);
+                    File[] removeFiles = removeDir.listFiles();
+                    for (int ii = 0; ii < removeFiles.length; ii++) {
+                        removeFiles[ii].delete();
+                    }
+                    removeDir.delete();
+                    playlistsDeleted++;
+                }
+            }
+        }
+        long stopTime = System.nanoTime();
+
+        if(stopTime - startTime < 5e8) {
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        final int finalPlaylistsDeleted = playlistsDeleted;
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (!oldPlaylistsDialog.isCancelled())
+                    oldPlaylistsDialog.cancel();
+
+                new MaterialDialog.Builder(getActivity())
+                        .title(R.string.dialog_removingoldplaylists)
+                        .content(String.format("Removed %d playlists", finalPlaylistsDeleted))
+                        .positiveText(R.string.dialog_dismiss)
+                        .show();
+            }
+        });
     }
 
     public class GetPlaylistSelection extends AsyncTask<Void, Void, Void> {
@@ -233,15 +310,12 @@ public class SettingsFragment extends Fragment{
             return null;
         }
 
-        protected void onProgressUpdate(Integer... progress) {
-
-        }
-
-        protected void onPostExecute(Long result) {
-        }
+        protected void onProgressUpdate(Integer... progress) {}
+        protected void onPostExecute(Long result) {}
     }
 
     public void retrievePlaylistSelection() {
+        long startTime = System.nanoTime();
         SharedPreferences settings = getActivity().getSharedPreferences("settings", Context.MODE_PRIVATE);
         String serverUrl = settings.getString("server", SettingsFragment.default_server);
         if(!serverUrl.endsWith("/"))
@@ -269,6 +343,16 @@ public class SettingsFragment extends Fragment{
                         playlistsToSelect.add(i);
                         break;
                     }
+                }
+            }
+
+            long stopTime = System.nanoTime();
+
+            if(stopTime - startTime < 4e8) {
+                try {
+                    Thread.sleep(400);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
             }
 
