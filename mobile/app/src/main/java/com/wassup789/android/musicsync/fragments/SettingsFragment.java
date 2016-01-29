@@ -1,32 +1,40 @@
 package com.wassup789.android.musicsync.fragments;
 
 import android.app.NotificationManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.os.AsyncTask;
-import android.support.v4.app.Fragment;
-import android.content.Context;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
 import android.text.InputType;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.CompoundButton;
-import android.widget.EditText;
+import android.widget.GridLayout;
+import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
+import com.afollestad.materialdialogs.Theme;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.wassup789.android.musicsync.BackgroundService;
 import com.wassup789.android.musicsync.MainActivity;
 import com.wassup789.android.musicsync.R;
+import com.wassup789.android.musicsync.objectClasses.DoubleListItem;
+import com.wassup789.android.musicsync.objectClasses.DoubleListItemAdapter;
 import com.wassup789.android.musicsync.objectClasses.PlaylistInformation;
 
 import java.io.BufferedReader;
@@ -38,8 +46,9 @@ import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 
-public class SettingsFragment extends Fragment{
+public class SettingsFragment extends Fragment {
 
     public static final String default_server = "";
     public static final Boolean default_refreshToggle = true;
@@ -50,15 +59,91 @@ public class SettingsFragment extends Fragment{
     public MaterialDialog playlistsDialog;
     public MaterialDialog oldPlaylistsDialog;
 
+    private boolean fromListViewChecked = false;
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_settings, container, false);
 
         registerGeneral(view);
-        registerListeners(view);
 
+        SharedPreferences settings = getActivity().getSharedPreferences("settings", Context.MODE_PRIVATE);
+
+        final ArrayList<DoubleListItem> data = new ArrayList<DoubleListItem>();
+        data.add(new DoubleListItem("toggleMusicSync", false, "Enable Music Sync", null, true).setSwitchValue(settings.getBoolean("refreshToggle", default_refreshToggle)));
+        data.add(new DoubleListItem("editRefreshInterval", false, "Edit Refresh Interval", "Edit the playlist refresh interval (in minutes)", false));
+        data.add(new DoubleListItem("divider_serverSettings", true,  "Server Settings", null, false));
+        data.add(new DoubleListItem("selectServer", false, "Select Server", null, false));
+        data.add(new DoubleListItem("editPlaylists", false, "Edit Playlists", "Edit the playlist list", false));
+        data.add(new DoubleListItem("forceRefresh", false, "Force Refresh", null, false));
+        data.add(new DoubleListItem("divider_remove", true,  "Removal Items", null, false));
+        data.add(new DoubleListItem("removeOldPlaylists", false, "Remove Old Playlists", "Remove playlist files that are not in the playlist list", false));
+        data.add(new DoubleListItem("removeAllFiles", false, "Remove All Files", "Removes all media files created", false));
+
+        ListView list = DoubleListItemAdapter.getListView(getContext(), (ListView) view.findViewById(R.id.settingsListView), data, new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
+                int position = Integer.parseInt(compoundButton.getText().toString());
+                if (!fromListViewChecked) {
+                    switch (data.get(position).name) {
+                        case "toggleMusicSync":
+                            setMusicSync(!isChecked);
+                            break;
+                    }
+                } else
+                    fromListViewChecked = false;
+            }
+        });
+        list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapter, View view, int position, long l) {
+                DoubleListItem item = (DoubleListItem) adapter.getItemAtPosition(position);
+
+                switch(item.name){
+                    case "toggleMusicSync":
+                        if (item.listSwitch != null) {
+                            setMusicSync(!item.listSwitch.isChecked());
+                            fromListViewChecked = true;
+                            item.listSwitch.setChecked(!item.listSwitch.isChecked());
+                        }else
+                            Toast.makeText(getActivity(), "Unable to save setting", Toast.LENGTH_LONG).show();
+                        break;
+                    case "editRefreshInterval":
+                        setRefreshInterval();
+                        break;
+                    case "selectServer":
+                        displayServerSelection();
+                        break;
+                    case "editPlaylists":
+                        playlistsDialog = new MaterialDialog.Builder(getActivity())
+                                .title(R.string.dialog_playlistsSelection_title)
+                                .content(R.string.dialog_loading)
+                                .progress(true, 0)
+                                .show();
+
+                        new GetPlaylistSelection().execute();
+                        break;
+                    case "forceRefresh":
+                        forceRefresh();
+                        break;
+                    case "removeOldPlaylists":
+                        oldPlaylistsDialog = new MaterialDialog.Builder(getActivity())
+                                .title(R.string.dialog_removingoldplaylists)
+                                .content(R.string.dialog_wait)
+                                .progress(true, 0)
+                                .show();
+
+                        new RemoveOldPlaylistsAsync().execute();
+                        break;
+                    case "removeAllFiles":
+                        removeAllFiles();
+                        break;
+                }
+            }
+        });
         return view;
     }
-    
+
     public void registerGeneral(View view){
         SharedPreferences settings = getActivity().getSharedPreferences("settings", Context.MODE_PRIVATE);
         SharedPreferences.Editor settingsEditor = settings.edit();
@@ -71,237 +156,88 @@ public class SettingsFragment extends Fragment{
         if(!settings.contains("playlists"))
             settingsEditor.putString("playlists", default_playlists);
         settingsEditor.commit();
-
-        Boolean refreshToggle = settings.getBoolean("refreshToggle", default_refreshToggle);
-        Switch refreshToggleSwitch = (Switch) view.findViewById(R.id.refreshToggleSwitch);
-        refreshToggleSwitch.setChecked(refreshToggle);
-
-        Integer refreshInterval = settings.getInt("refreshInterval", default_refreshInterval);
-        TextView refreshIntervalValue = (TextView) view.findViewById(R.id.refreshIntervalValue);
-        refreshIntervalValue.setText(refreshInterval.toString());
     }
 
-    public void registerListeners(View view) {
-        Button selectServerButton = (Button) view.findViewById(R.id.selectServerButton);
-        selectServerButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                final SharedPreferences settings = getActivity().getSharedPreferences("settings", Context.MODE_PRIVATE);
-                String serverUrl = settings.getString("server", default_server);
-                new MaterialDialog.Builder(getActivity())
-                    .title(R.string.dialog_selectServer_title)
-                    .positiveText(R.string.dialog_done)
-                        .inputType(InputType.TYPE_CLASS_TEXT)
-                        .input(getString(R.string.dialog_selectServer_hint), serverUrl, new MaterialDialog.InputCallback() {
-                            @Override
-                            public void onInput(MaterialDialog dialog, CharSequence input) {
-                                try {
-                                    new URL(input.toString());
-                                } catch (MalformedURLException e) {
-                                    Toast.makeText(getActivity(), "Invalid URL", Toast.LENGTH_SHORT).show();
-                                    return;
-                                }
-                                String url = input.toString();
-                                if(!url.toLowerCase().startsWith("http")  && !url.toLowerCase().startsWith("https")) {
-                                    Toast.makeText(getActivity(), "Invalid URL, only http and https are supported", Toast.LENGTH_SHORT).show();
-                                    return;
-                                }
-
-                                if(!url.endsWith("/"))
-                                    url += "/";
-                                Log.i("SettingsFragment", String.format("Set server to: %s", url));
-
-                                SharedPreferences.Editor settingsEditor = settings.edit();
-                                settingsEditor.putString("server", url);
-                                settingsEditor.putString("playlists", default_playlists);
-                                settingsEditor.commit();
-                            }
-                        })
-                        .show();
-            }
-        });
-
-        Button selectPlaylistsButton = (Button) view.findViewById(R.id.selectPlaylistsButton);
-        selectPlaylistsButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                playlistsDialog = new MaterialDialog.Builder(getActivity())
-                        .title(R.string.dialog_playlistsSelection_title)
-                        .content(R.string.dialog_loading)
-                        .progress(true, 0)
-                        .show();
-
-                new GetPlaylistSelection().execute();
-            }
-        });
-
-        Switch refreshToggleSwitch = (Switch) view.findViewById(R.id.refreshToggleSwitch);
-        refreshToggleSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
-                SharedPreferences settings = getActivity().getSharedPreferences("settings", Context.MODE_PRIVATE);
-                SharedPreferences.Editor settingsEditor = settings.edit();
-                settingsEditor.putBoolean("refreshToggle", isChecked);
-                settingsEditor.commit();
-
-                Intent intent = new Intent(getActivity(), BackgroundService.class);
-                intent.putExtra("receiver", MainActivity.resultReceiver);
-
-                getActivity().stopService(intent);
-                NotificationManager notificationManager = (NotificationManager) getContext().getSystemService(Context.NOTIFICATION_SERVICE);
-                notificationManager.cancel(BackgroundService.notificationID);
-                if (isChecked)
-                    getActivity().startService(intent);
-            }
-        });
-
-        Button refreshIntervalSaveButton = (Button) view.findViewById(R.id.refreshIntervalSaveButton);
-        refreshIntervalSaveButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                EditText refreshIntervalValue = (EditText) getActivity().findViewById(R.id.refreshIntervalValue);
-                String value = refreshIntervalValue.getText().toString();
-                if (!value.matches("[-+]?\\d*\\.?\\d+"))//Is Numeric
-                    return;
-                Integer intVal = Integer.parseInt(value);
-                SharedPreferences settings = getActivity().getSharedPreferences("settings", Context.MODE_PRIVATE);
-                SharedPreferences.Editor settingsEditor = settings.edit();
-                settingsEditor.putInt("refreshInterval", intVal);
-                settingsEditor.commit();
-                Toast.makeText(getActivity(), "Saved", Toast.LENGTH_SHORT).show();
-
-                Intent intent = new Intent(getActivity(), BackgroundService.class);
-                intent.putExtra("receiver", MainActivity.resultReceiver);
-
-                getActivity().stopService(intent);
-                NotificationManager notificationManager = (NotificationManager) getContext().getSystemService(Context.NOTIFICATION_SERVICE);
-                notificationManager.cancel(BackgroundService.notificationID);
-                getActivity().startService(intent);
-            }
-        });
-
-        Button forceRefreshButton = (Button) view.findViewById(R.id.forceRefreshButton);
-        forceRefreshButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Toast.makeText(getActivity(), "Refreshing...", Toast.LENGTH_SHORT).show();
-
-                Intent intent = new Intent(getActivity(), BackgroundService.class);
-                intent.putExtra("receiver", MainActivity.resultReceiver);
-
-                getActivity().stopService(intent);
-                NotificationManager notificationManager = (NotificationManager) getContext().getSystemService(Context.NOTIFICATION_SERVICE);
-                notificationManager.cancel(BackgroundService.notificationID);
-                getActivity().startService(intent);
-            }
-        });
-
-        Button removeAllFilesButton = (Button) view.findViewById(R.id.removeAllFilesButton);
-        removeAllFilesButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                new MaterialDialog.Builder(getActivity())
-                        .title(R.string.dialog_removefiles_title)
-                        .content(R.string.dialog_removefiles_desc)
-                        .negativeText(R.string.dialog_delete)//Inversion, negative = delete
-                        .positiveText(R.string.dialog_cancel)//Positive = cancel
-                        .icon(getActivity().getDrawable(R.drawable.ic_delete_black_48dp))
-                        .onNegative(new MaterialDialog.SingleButtonCallback() {
-                            @Override
-                            public void onClick(MaterialDialog dialog, DialogAction which) {
-                                File f = new File(BackgroundService.mediaDirectory);
-                                File[] files = f.listFiles();
-                                for (int i = 0; i < files.length; i++)
-                                    files[i].delete();
-                                Toast.makeText(getActivity(), "Removed all media files", Toast.LENGTH_SHORT).show();
-                            }
-                        })
-                        .show();
-            }
-        });
-
-        Button removeOldPlaylistFilesButton = (Button) view.findViewById(R.id.removeOldPlaylistFilesButton);
-        removeOldPlaylistFilesButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                oldPlaylistsDialog = new MaterialDialog.Builder(getActivity())
-                        .title(R.string.dialog_removingoldplaylists)
-                        .content(R.string.dialog_wait)
-                        .progress(true, 0)
-                        .show();
-
-                new RemoveOldPlaylistsAsync().execute();
-            }
-        });
-
-    }
-
-    public class RemoveOldPlaylistsAsync extends AsyncTask<Void, Void, Void> {
-        protected Void doInBackground(Void... strings) {
-            removeOldPlaylists();
-            return null;
-        }
-
-        protected void onProgressUpdate(Integer... progress) {}
-        protected void onPostExecute(Long result) {}
-    }
-
-    public void removeOldPlaylists(){
-        long startTime = System.nanoTime();
+    public void setMusicSync(boolean value){
         SharedPreferences settings = getActivity().getSharedPreferences("settings", Context.MODE_PRIVATE);
-        String[] playlists = new Gson().fromJson(settings.getString("playlists", SettingsFragment.default_playlists), String[].class);
-        File f = new File(BackgroundService.mediaDirectory);
-        String[] directories = f.list(new FilenameFilter() {
-            @Override
-            public boolean accept(File current, String name) {
-                return new File(current, name).isDirectory();
-            }
-        });
-        int playlistsDeleted = 0;
-        if(playlists.length > 0) {
-            for (int i = 0; i < directories.length; i++) {
-                Boolean isValid = false;
-                for (int ii = 0; ii < playlists.length; ii++) {
-                    if (directories[i].equals(playlists[ii])) {
-                        isValid = true;
-                        break;
+        SharedPreferences.Editor settingsEditor = settings.edit();
+        settingsEditor.putBoolean("refreshToggle", value);
+        settingsEditor.commit();
+
+        Intent intent = new Intent(getActivity(), BackgroundService.class);
+        intent.putExtra("receiver", MainActivity.resultReceiver);
+
+        getActivity().stopService(intent);
+        NotificationManager notificationManager = (NotificationManager) getContext().getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.cancel(BackgroundService.notificationID);
+        if (value)
+            getActivity().startService(intent);
+        Toast.makeText(getActivity(), "Saved", Toast.LENGTH_SHORT).show();
+    }
+
+    public void setRefreshInterval(){
+        SharedPreferences settings = getActivity().getSharedPreferences("settings", Context.MODE_PRIVATE);
+        new MaterialDialog.Builder(getContext())
+                .title(R.string.dialog_setrefreshinterval)
+                .content(R.string.dialog_setrefreshinterval_content)
+                .inputType(InputType.TYPE_CLASS_NUMBER)
+                .inputRange(1, 10)
+                .positiveText(R.string.dialog_save)
+                .input(getString(R.string.dialog_setrefreshinterval_default), "" + settings.getInt("refreshInterval", default_refreshInterval), false, new MaterialDialog.InputCallback() {
+                    @Override
+                    public void onInput(MaterialDialog dialog, CharSequence input) {
+                        int value = Integer.parseInt(input.toString());
+
+                        SharedPreferences settings = getActivity().getSharedPreferences("settings", Context.MODE_PRIVATE);
+                        SharedPreferences.Editor settingsEditor = settings.edit();
+                        settingsEditor.putInt("refreshInterval", value);
+                        settingsEditor.commit();
+                        Toast.makeText(getActivity(), "Saved", Toast.LENGTH_SHORT).show();
+
+                        Intent intent = new Intent(getActivity(), BackgroundService.class);
+                        intent.putExtra("receiver", MainActivity.resultReceiver);
+
+                        getActivity().stopService(intent);
+                        NotificationManager notificationManager = (NotificationManager) getContext().getSystemService(Context.NOTIFICATION_SERVICE);
+                        notificationManager.cancel(BackgroundService.notificationID);
+                        getActivity().startService(intent);
                     }
-                }
-                if (!isValid) {
-                    File removeDir = new File(BackgroundService.mediaDirectory + directories[i]);
-                    File[] removeFiles = removeDir.listFiles();
-                    for (int ii = 0; ii < removeFiles.length; ii++) {
-                        removeFiles[ii].delete();
+                }).show();
+    }
+
+    public void displayServerSelection(){
+        final SharedPreferences settings = getActivity().getSharedPreferences("settings", Context.MODE_PRIVATE);
+        String serverUrl = settings.getString("server", default_server);
+        new MaterialDialog.Builder(getActivity())
+                .title(R.string.dialog_selectServer_title)
+                .positiveText(R.string.dialog_save)
+                .inputType(InputType.TYPE_TEXT_VARIATION_URI)
+                .input(getString(R.string.dialog_selectServer_hint), serverUrl, new MaterialDialog.InputCallback() {
+                    @Override
+                    public void onInput(MaterialDialog dialog, CharSequence input) {
+                        try {
+                            new URL(input.toString());
+                        } catch (MalformedURLException e) {
+                            Toast.makeText(getActivity(), "Invalid URL", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        String url = input.toString();
+                        if(!url.toLowerCase().startsWith("http")  && !url.toLowerCase().startsWith("https")) {
+                            Toast.makeText(getActivity(), "Invalid URL, only http and https are supported", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+
+                        if(!url.endsWith("/"))
+                            url += "/";
+                        Log.i("SettingsFragment", String.format("Set server to: %s", url));
+
+                        SharedPreferences.Editor settingsEditor = settings.edit();
+                        settingsEditor.putString("server", url);
+                        settingsEditor.putString("playlists", default_playlists);
+                        settingsEditor.commit();
                     }
-                    removeDir.delete();
-                    playlistsDeleted++;
-                }
-            }
-        }
-        long stopTime = System.nanoTime();
-
-        if(stopTime - startTime < 5e8) {
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-
-        final int finalPlaylistsDeleted = playlistsDeleted;
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                if (!oldPlaylistsDialog.isCancelled())
-                    oldPlaylistsDialog.cancel();
-
-                new MaterialDialog.Builder(getActivity())
-                        .title(R.string.dialog_removingoldplaylists)
-                        .content(String.format("Removed %d playlists", finalPlaylistsDeleted))
-                        .positiveText(R.string.dialog_dismiss)
-                        .show();
-            }
-        });
+                })
+                .show();
     }
 
     public class GetPlaylistSelection extends AsyncTask<Void, Void, Void> {
@@ -382,7 +318,7 @@ public class SettingsFragment extends Fragment{
                                     return true;
                                 }
                             })
-                            .positiveText(R.string.dialog_dismiss)
+                            .positiveText(R.string.dialog_save)
                             .show();
                 }
             });
@@ -401,4 +337,105 @@ public class SettingsFragment extends Fragment{
             e.printStackTrace();
         }
     }
+
+    public void forceRefresh(){
+        Toast.makeText(getActivity(), "Refreshing...", Toast.LENGTH_SHORT).show();
+
+        Intent intent = new Intent(getActivity(), BackgroundService.class);
+        intent.putExtra("receiver", MainActivity.resultReceiver);
+
+        getActivity().stopService(intent);
+        NotificationManager notificationManager = (NotificationManager) getContext().getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.cancel(BackgroundService.notificationID);
+        getActivity().startService(intent);
+    }
+
+    public class RemoveOldPlaylistsAsync extends AsyncTask<Void, Void, Void> {
+        protected Void doInBackground(Void... strings) {
+            removeOldPlaylists();
+            return null;
+        }
+
+        protected void onProgressUpdate(Integer... progress) {}
+        protected void onPostExecute(Long result) {}
+    }
+
+    public void removeOldPlaylists(){
+        long startTime = System.nanoTime();
+        SharedPreferences settings = getActivity().getSharedPreferences("settings", Context.MODE_PRIVATE);
+        String[] playlists = new Gson().fromJson(settings.getString("playlists", SettingsFragment.default_playlists), String[].class);
+        File f = new File(BackgroundService.mediaDirectory);
+        String[] directories = f.list(new FilenameFilter() {
+            @Override
+            public boolean accept(File current, String name) {
+                return new File(current, name).isDirectory();
+            }
+        });
+        int playlistsDeleted = 0;
+        if(playlists.length > 0) {
+            for (int i = 0; i < directories.length; i++) {
+                Boolean isValid = false;
+                for (int ii = 0; ii < playlists.length; ii++) {
+                    if (directories[i].equals(playlists[ii])) {
+                        isValid = true;
+                        break;
+                    }
+                }
+                if (!isValid) {
+                    File removeDir = new File(BackgroundService.mediaDirectory + directories[i]);
+                    File[] removeFiles = removeDir.listFiles();
+                    for (int ii = 0; ii < removeFiles.length; ii++) {
+                        removeFiles[ii].delete();
+                    }
+                    removeDir.delete();
+                    playlistsDeleted++;
+                }
+            }
+        }
+        long stopTime = System.nanoTime();
+
+        if(stopTime - startTime < 5e8) {
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        final int finalPlaylistsDeleted = playlistsDeleted;
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (!oldPlaylistsDialog.isCancelled())
+                    oldPlaylistsDialog.cancel();
+
+                new MaterialDialog.Builder(getActivity())
+                        .title(R.string.dialog_removingoldplaylists)
+                        .content(String.format("Removed %d playlists", finalPlaylistsDeleted))
+                        .positiveText(R.string.dialog_done)
+                        .show();
+            }
+        });
+    }
+
+    public void removeAllFiles(){
+        new MaterialDialog.Builder(getActivity())
+                .title(R.string.dialog_removefiles_title)
+                .content(R.string.dialog_removefiles_desc)
+                .negativeText(R.string.dialog_delete)//Inversion, negative = delete
+                .positiveText(R.string.dialog_cancel)//Positive = cancel
+                .icon(getActivity().getDrawable(R.drawable.ic_delete_black_48dp))
+                .onNegative(new MaterialDialog.SingleButtonCallback() {
+                    @Override
+                    public void onClick(MaterialDialog dialog, DialogAction which) {
+                        File f = new File(BackgroundService.mediaDirectory);
+                        File[] files = f.listFiles();
+                        for (int i = 0; i < files.length; i++)
+                            files[i].delete();
+                        Toast.makeText(getActivity(), "Removed all media files", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .show();
+    }
+    
 }
