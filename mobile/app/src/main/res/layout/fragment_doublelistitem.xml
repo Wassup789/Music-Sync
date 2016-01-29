@@ -6,24 +6,25 @@
     android:layout_height="match_parent"
     android:descendantFocusability="blocksDescendants">
 
-    <GridLayout
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/listViewContainer"
         android:background="@drawable/listview_border">
 
         <LinearLayout
             android:orientation="vertical"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
-            android:paddingTop="22dp"
-            android:paddingBottom="22dp"
-            android:paddingLeft="26dp"
-            android:id="@+id/listViewContent">
+            android:paddingTop="20dp"
+            android:paddingBottom="20dp"
+            android:paddingLeft="32dp"
+            android:id="@+id/listViewContent"
+            android:layout_toStartOf="@+id/listViewSwitch"
+            android:paddingRight="26dp">
 
             <TextView android:id="@+id/listViewTitle"
-                android:layout_width="310dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceListItem"
                 android:text="List 1"
@@ -31,7 +32,7 @@
                 android:layout_column="0" />
 
             <TextView android:id="@+id/listViewSubtitle"
-                android:layout_width="310dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_below="@+id/text1"
                 android:layout_alignStart="@+id/text1"
@@ -49,10 +50,12 @@
             android:layout_column="1"
             android:layout_gravity="center_vertical|right"
             android:visibility="visible"
-            android:layout_marginRight="22dp"
-            android:textSize="0px" />
-
-    </GridLayout>
+            android:layout_marginRight="30dp"
+            android:textSize="0px"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentEnd="true"
+            android:layout_alignBottom="@+id/listViewContent" />
+    </RelativeLayout>
 
     <TextView
         android:layout_width="wrap_content"
@@ -60,7 +63,7 @@
         android:text="Divider"
         android:id="@+id/listViewDivider"
         android:textColor="?attr/colorAccent"
-        android:layout_marginLeft="14dp"
+        android:layout_marginLeft="18dp"
         android:paddingTop="2dp"
         android:paddingBottom="6dp" />
 

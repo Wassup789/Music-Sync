@@ -1,6 +1,7 @@
 package com.wassup789.android.musicsync.objectClasses;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
@@ -29,22 +30,27 @@ public class DoubleListItemAdapter {
                 Switch listSwitch = (Switch) view.findViewById(R.id.listViewSwitch);
 
                 DoubleListItem item = data.get(position);
-                if(data.get(position).isDivider){
+                if(item.isDivider){
                     listViewContent.setVisibility(View.GONE);
                     listSwitch.setVisibility(View.GONE);
+                    listDivider.setVisibility(View.VISIBLE);
                     listDivider.setText(item.title);
+
+                    if(item.textColor != -1)
+                        listDivider.setTextColor(item.textColor);
                 }else{
                     listDivider.setVisibility(View.GONE);
                     listTitle.setText(item.title);
 
-                    if(data.get(position).subTitle == null)
+                    if(item.subTitle == null)
                         listSubtitle.setVisibility(View.GONE);
                     else
                         listSubtitle.setText(item.subTitle);
 
-                    if(!data.get(position).useSwitch)
+                    if(!item.useSwitch)
                         listSwitch.setVisibility(View.GONE);
                     else{
+                        listSwitch.setVisibility(View.VISIBLE);
                         if(item.switchval != -1){
                             listSwitch.setChecked(item.switchval == 1 ? true : false);
                         }
@@ -54,6 +60,10 @@ public class DoubleListItemAdapter {
                             listSwitch.setOnCheckedChangeListener(onCheckedListener);
                     }
 
+                    if(item.textColor != -1)
+                        listTitle.setTextColor(item.textColor);
+                    if(item.subTextColor != -1)
+                        listSubtitle.setTextColor(item.textColor);
                 }
                 return view;
             }

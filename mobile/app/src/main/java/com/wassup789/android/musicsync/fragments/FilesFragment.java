@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -28,6 +29,7 @@ import com.wassup789.android.musicsync.objectClasses.DoubleListItemAdapter;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Objects;
 
 public class FilesFragment extends Fragment {
     public boolean isViewingPlaylist = false;
@@ -44,9 +46,7 @@ public class FilesFragment extends Fragment {
         view.setOnKeyListener(new View.OnKeyListener() {
             @Override
             public boolean onKey(View view, int keyCode, KeyEvent keyEvent) {
-                if(keyCode == KeyEvent.KEYCODE_BACK && isVisible())
-                {
-                    System.out.println(isViewingPlaylist);
+                if(keyCode == KeyEvent.KEYCODE_BACK && isVisible()){
                     if(isViewingPlaylist)
                         setListViewDefault(view);
                     else
@@ -62,7 +62,7 @@ public class FilesFragment extends Fragment {
         toggleButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(isViewingMetadata)
+                if (isViewingMetadata)
                     setViewingMetadata(false, toggleButton, currentPlaylist);
                 else
                     setViewingMetadata(true, toggleButton, currentPlaylist);
@@ -122,7 +122,7 @@ public class FilesFragment extends Fragment {
         if (toView) {
             metadataDialog = new MaterialDialog.Builder(getActivity())
                     .title("Loading Metadata...")
-                    .content(R.string.dialog_loading)
+                    .content(R.string.dialog_wait)
                     .progress(true, 0)
                     .cancelable(false)
                     .show();
@@ -137,12 +137,23 @@ public class FilesFragment extends Fragment {
             if (!f.exists())
                 return;
             File file[] = f.listFiles();
-            filesData.add(new DoubleListItem("", true, String.format("File Path: %s", f.getPath()), null, false));
-            filesData.add(new DoubleListItem("", true, String.format("Total Files: %d", file.length), null, false));
+            filesData.add(new DoubleListItem("divider_filepath", true, String.format("File Path: %s/", f.getPath()), null, false).setTextColor(Color.parseColor("#777777")));
+            filesData.add(new DoubleListItem("divider_totalfiles", true, String.format("Total Files: %d", file.length), null, false).setTextColor(Color.parseColor("#777777")));
             MediaMetadataRetriever mmr = new MediaMetadataRetriever();
+            double totalSize = 0;
             for (int i = 0; i < file.length; i++) {
-                filesData.add(new DoubleListItem(file[i].getPath(), false, file[i].getName(), null, false));
+                double fileSize = Math.round(file[i].length() / 1000000.0 * 10) / 10.0;
+                totalSize += fileSize;
+                filesData.add(new DoubleListItem(file[i].getPath(), false, file[i].getName(), String.format("%sMB", fileSize), false));
             }
+            String fileSuffix = "MB";
+            if(totalSize/1000 > 0) {
+                totalSize = Math.round(totalSize / 1000.0 * 10) / 10.0;
+                fileSuffix = "GB";
+            }else
+                totalSize = Math.round(totalSize * 10) / 10.0;
+
+            filesData.add(2, new DoubleListItem("divider_totalsize", true, String.format("Total Size: %s%s", totalSize, fileSuffix), null, false).setTextColor(Color.parseColor("#777777")));
 
             button.setText("View Metadata");
             isViewingMetadata = false;
@@ -176,44 +187,74 @@ public class FilesFragment extends Fragment {
         if(!f.exists())
             return;
         File file[] = f.listFiles();
-        filesData.add(new DoubleListItem("", true, String.format("File Path: %s", f.getPath()), null, false));
-        filesData.add(new DoubleListItem("", true, String.format("Total Files: %d", file.length), null, false));
+        filesData.add(new DoubleListItem("divider_filepath", true, String.format("File Path: %s/", f.getPath()), null, false).setTextColor(Color.parseColor("#777777")));
+        filesData.add(new DoubleListItem("divider_totalfiles", true, String.format("Total Files: %d", file.length), null, false).setTextColor(Color.parseColor("#777777")));
         MediaMetadataRetriever mmr = new MediaMetadataRetriever();
+        double totalSize = 0;
         for (int i = 0; i < file.length; i++) {
             String artist = "";
             String title = "";
+            int duration = -1;
+            int bitrate = -1;
+            String time = "??:??";
+            double fileSize = Math.round(file[i].length() / 1000000.0 * 10) / 10.0;
+            totalSize += fileSize;
             try {
                 mmr.setDataSource(file[i].getPath());
                 artist = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
                 if(artist == null)
                     artist = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUMARTIST);
                 title = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE);
-            }catch (RuntimeException e){
-                continue;
-            }
-            if((artist == null || artist == "") && artist != null)
-                artist = file[i].getName();
-            if((title == null || title == "") && artist != null){
-                title = file[i].getName();
+                duration = (int)Math.floor(Integer.parseInt(mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)) / 1000);
+                bitrate = (int)Math.floor(Integer.parseInt(mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE)) / 1000);
+            }catch (RuntimeException e){}
+
+            if(title == null || title.equals("")){
                 artist = null;
+                title = file[i].getName();
             }
-            if(artist == null && title == null)
-                filesData.add(new DoubleListItem(file[i].getPath(), false, file[i].getName(), null, false));
-            else
-                filesData.add(new DoubleListItem(file[i].getPath(), false, title, "" + artist, false));
+
+            if(duration != -1){
+                String hours = "" + (int) Math.floor(duration / 3600);
+                String minutes = "" + (int) Math.floor((duration - (Integer.parseInt(hours) * 3600)) / 60);
+                String seconds = "" + (duration - (Integer.parseInt(hours) * 3600) - (Integer.parseInt(minutes) * 60));
+                if (Integer.parseInt(hours) < 10) {
+                    hours = "0" + hours;
+                }
+                if (Integer.parseInt(minutes) < 10) {
+                    minutes = "0" + minutes;
+                }
+                if (Integer.parseInt(seconds) < 10) {
+                    seconds = "0" + seconds;
+                }
+                if (Integer.parseInt(hours) == 0)
+                    time = minutes + ":" + seconds;
+                else
+                    time = hours + ":" + minutes + ":" + seconds;
+            }
+
+            filesData.add(new DoubleListItem(file[i].getPath(), false, String.format("%s%s", (artist == null) ? "" : artist + " - ", title), String.format("%s - %skbps - %sMB", time, (bitrate == -1 ? "???" : bitrate), fileSize), false));
         }
+        String fileSuffix = "MB";
+        if(totalSize/1000 > 0) {
+            totalSize = Math.round(totalSize / 1000.0 * 10) / 10.0;
+            fileSuffix = "GB";
+        }else
+            totalSize = Math.round(totalSize * 10) / 10.0;
+
+        filesData.add(2, new DoubleListItem("divider_totalsize", true, String.format("Total Size: %s%s", totalSize, fileSuffix), null, false).setTextColor(Color.parseColor("#777777")));
 
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                if(!metadataDialog.isCancelled())
+                if (!metadataDialog.isCancelled())
                     metadataDialog.cancel();
 
                 ListView filesList = DoubleListItemAdapter.getListView(getContext(), (ListView) getActivity().findViewById(R.id.filesListView), filesData, null);
                 filesList.setVisibility(View.VISIBLE);
                 filesList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     @Override
-                    public void onItemClick(AdapterView<?> adapter, View view, int position, long l){
+                    public void onItemClick(AdapterView<?> adapter, View view, int position, long l) {
                         DoubleListItem item = (DoubleListItem) adapter.getItemAtPosition(position);
                         playAudio(item.name);
                     }
@@ -226,7 +267,7 @@ public class FilesFragment extends Fragment {
         Intent intent = new Intent();
         intent.setAction(android.content.Intent.ACTION_VIEW);
         File file = new File(filePath);
-        if(file.isDirectory() && file.exists()) {
+        if(!file.isDirectory() && file.exists()) {
             intent.setDataAndType(Uri.fromFile(file), "audio/*");
             startActivity(intent);
         }
