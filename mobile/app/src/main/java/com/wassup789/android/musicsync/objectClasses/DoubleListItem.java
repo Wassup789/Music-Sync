@@ -1,5 +1,6 @@
 package com.wassup789.android.musicsync.objectClasses;
 
+import android.graphics.Color;
 import android.widget.Switch;
 
 public class DoubleListItem{
@@ -10,6 +11,8 @@ public class DoubleListItem{
     public boolean useSwitch;
     public Switch listSwitch = null;
     public int switchval = -1;
+    public int textColor = -1;
+    public int subTextColor = -1;
 
     public DoubleListItem(String _itemName, boolean _isDivider, String _title, String _subTitle, boolean _useSwitch){
         name = _itemName;
@@ -30,6 +33,15 @@ public class DoubleListItem{
      */
     public DoubleListItem setSwitchValue(boolean isChecked){
         switchval = (isChecked == true ? 1 : 0);
+        return this;
+    }
+
+    public DoubleListItem setTextColor(int color){
+        textColor = color;
+        return this;
+    }
+    public DoubleListItem setSubTextColor(int color){
+        subTextColor = color;
         return this;
     }
 }

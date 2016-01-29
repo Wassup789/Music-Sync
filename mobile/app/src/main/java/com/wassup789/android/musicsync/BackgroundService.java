@@ -345,7 +345,9 @@ public class BackgroundService extends Service {
                     bufferedWriter.write((mediaDirectory + playlistName + "/" + mediaFiles[i].getName()).toString());
                     bufferedWriter.newLine();
                     bufferedWriter.newLine();
-                } catch (Exception e) {
+                } catch (RuntimeException e) {
+                    bufferedWriter.write((mediaDirectory + playlistName + "/" + mediaFiles[i].getName()).toString());
+                    bufferedWriter.newLine();
                     e.printStackTrace();
                 }
             }
