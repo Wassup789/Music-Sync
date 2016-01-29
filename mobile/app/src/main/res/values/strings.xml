@@ -23,10 +23,15 @@
     <string name="dialog_cancel">Cancel</string>
     <string name="dialog_delete">Delete</string>
     <string name="dialog_done">Done</string>
+    <string name="dialog_save">Save</string>
 
     <string name="dialog_loading">Loading...</string>
     <string name="dialog_wait">Please wait...</string>
     <string name="dialog_removingoldplaylists">Removing old files...</string>
+
+    <string name="dialog_setrefreshinterval">Set Refresh Interval</string>
+    <string name="dialog_setrefreshinterval_content">Enter a number (in minutes):</string>
+    <string name="dialog_setrefreshinterval_default">Default: 5</string>
 
     <string name="action_about">About</string>
 

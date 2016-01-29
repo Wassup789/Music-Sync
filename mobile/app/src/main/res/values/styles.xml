@@ -6,6 +6,8 @@
         <item name="colorPrimaryDark">#EF6C00</item>
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
+        <item name="colorAccent">#FF6E40</item>
+        <item name="colorButtonNormal">#FF6E40</item>
     </style>
 
     <style name="Toolbar" parent="Base.ThemeOverlay.AppCompat.ActionBar">
