@@ -70,13 +70,14 @@ public class SettingsFragment extends Fragment {
         SharedPreferences settings = getActivity().getSharedPreferences("settings", Context.MODE_PRIVATE);
 
         final ArrayList<DoubleListItem> data = new ArrayList<DoubleListItem>();
+        data.add(new DoubleListItem("divider_general", true,  "General", null, false));
         data.add(new DoubleListItem("toggleMusicSync", false, "Enable Music Sync", null, true).setSwitchValue(settings.getBoolean("refreshToggle", default_refreshToggle)));
         data.add(new DoubleListItem("editRefreshInterval", false, "Edit Refresh Interval", "Edit the playlist refresh interval (in minutes)", false));
         data.add(new DoubleListItem("divider_serverSettings", true,  "Server Settings", null, false));
         data.add(new DoubleListItem("selectServer", false, "Select Server", null, false));
         data.add(new DoubleListItem("editPlaylists", false, "Edit Playlists", "Edit the playlist list", false));
         data.add(new DoubleListItem("forceRefresh", false, "Force Refresh", null, false));
-        data.add(new DoubleListItem("divider_remove", true,  "Removal Items", null, false));
+        data.add(new DoubleListItem("divider_remove", true,  "Cleanup", null, false));
         data.add(new DoubleListItem("removeOldPlaylists", false, "Remove Old Playlists", "Remove playlist files that are not in the playlist list", false));
         data.add(new DoubleListItem("removeAllFiles", false, "Remove All Files", "Removes all media files created", false));
 
