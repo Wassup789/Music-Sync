@@ -38,7 +38,6 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 [Files]
 Source: "..\app\Music Sync\bin\Release\MusicSync.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\app\Music Sync\bin\Release\Newtonsoft.Json.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\app\Music Sync\bin\Release\Newtonsoft.Json.xml"; DestDir: "{app}"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]

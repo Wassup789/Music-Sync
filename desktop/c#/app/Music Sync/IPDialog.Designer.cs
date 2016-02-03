@@ -67,7 +67,7 @@
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "IPDialog";
-            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Server IP";
             this.Load += new System.EventHandler(this.IPDialog_Load);
             this.ResumeLayout(false);

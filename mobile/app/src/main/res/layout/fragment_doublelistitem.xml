@@ -64,7 +64,7 @@
         android:id="@+id/listViewDivider"
         android:textColor="?attr/colorAccent"
         android:layout_marginLeft="18dp"
-        android:paddingTop="2dp"
+        android:paddingTop="6dp"
         android:paddingBottom="6dp" />
 
 </FrameLayout>

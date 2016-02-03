@@ -1,7 +1,6 @@
 package com.wassup789.android.musicsync.fragments;
 
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
@@ -28,8 +27,6 @@ import com.wassup789.android.musicsync.objectClasses.DoubleListItemAdapter;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Objects;
 
 public class FilesFragment extends Fragment {
     public boolean isViewingPlaylist = false;
@@ -92,8 +89,27 @@ public class FilesFragment extends Fragment {
         for(int i = 0; i < playlists.length; i++){
             if(playlists[i].equals(SettingsFragment.default_playlist))
                 break;
-            else
-                data.add(new DoubleListItem(playlists[i], false, playlists[i], null, false));
+            else{
+                File f = new File(BackgroundService.mediaDirectory + playlists[i]);
+                if(!f.exists() && !f.isDirectory())
+                    data.add(new DoubleListItem(playlists[i], false, playlists[i], null, false));
+                else {
+                    double totalSize = 0;
+                    File[] files = f.listFiles();
+                    for (int j = 0; j < files.length; j++) {
+                        double fileSize = Math.round(files[j].length() / 1000000.0 * 10) / 10.0;
+                        totalSize += fileSize;
+                    }
+                    String fileSuffix = "MB";
+                    if(totalSize/1000 > 0) {
+                        totalSize = Math.round(totalSize / 1000.0 * 10) / 10.0;
+                        fileSuffix = "GB";
+                    }else
+                        totalSize = Math.round(totalSize * 10) / 10.0;
+
+                    data.add(new DoubleListItem(playlists[i], false, playlists[i], String.format("Total Files: %d | Total Size: %s%s", files.length, totalSize, fileSuffix), false));
+                }
+            }
         }
 
         final ListView list = DoubleListItemAdapter.getListView(getContext(), (ListView) view.findViewById(R.id.playlistsListView), data, null);
@@ -136,18 +152,18 @@ public class FilesFragment extends Fragment {
             ArrayList<DoubleListItem> filesData = new ArrayList<DoubleListItem>();
             if (!f.exists())
                 return;
-            File file[] = f.listFiles();
+            File[] files = f.listFiles();
             filesData.add(new DoubleListItem("divider_filepath", true, String.format("File Path: %s/", f.getPath()), null, false).setTextColor(Color.parseColor("#777777")));
-            filesData.add(new DoubleListItem("divider_totalfiles", true, String.format("Total Files: %d", file.length), null, false).setTextColor(Color.parseColor("#777777")));
+            filesData.add(new DoubleListItem("divider_totalfiles", true, String.format("Total Files: %d", files.length), null, false).setTextColor(Color.parseColor("#777777")));
             MediaMetadataRetriever mmr = new MediaMetadataRetriever();
             double totalSize = 0;
-            for (int i = 0; i < file.length; i++) {
-                double fileSize = Math.round(file[i].length() / 1000000.0 * 10) / 10.0;
+            for (int i = 0; i < files.length; i++) {
+                double fileSize = Math.round(files[i].length() / 1000000.0 * 10) / 10.0;
                 totalSize += fileSize;
-                filesData.add(new DoubleListItem(file[i].getPath(), false, file[i].getName(), String.format("%sMB", fileSize), false));
+                filesData.add(new DoubleListItem(files[i].getPath(), false, files[i].getName(), String.format("%sMB", fileSize), false));
             }
             String fileSuffix = "MB";
-            if(totalSize/1000 > 0) {
+            if(totalSize/1000 >= 0) {
                 totalSize = Math.round(totalSize / 1000.0 * 10) / 10.0;
                 fileSuffix = "GB";
             }else
@@ -186,21 +202,21 @@ public class FilesFragment extends Fragment {
         final ArrayList<DoubleListItem> filesData = new ArrayList<DoubleListItem>();
         if(!f.exists())
             return;
-        File file[] = f.listFiles();
+        File[] files = f.listFiles();
         filesData.add(new DoubleListItem("divider_filepath", true, String.format("File Path: %s/", f.getPath()), null, false).setTextColor(Color.parseColor("#777777")));
-        filesData.add(new DoubleListItem("divider_totalfiles", true, String.format("Total Files: %d", file.length), null, false).setTextColor(Color.parseColor("#777777")));
+        filesData.add(new DoubleListItem("divider_totalfiles", true, String.format("Total Files: %d", files.length), null, false).setTextColor(Color.parseColor("#777777")));
         MediaMetadataRetriever mmr = new MediaMetadataRetriever();
         double totalSize = 0;
-        for (int i = 0; i < file.length; i++) {
+        for (int i = 0; i < files.length; i++) {
             String artist = "";
             String title = "";
             int duration = -1;
             int bitrate = -1;
             String time = "??:??";
-            double fileSize = Math.round(file[i].length() / 1000000.0 * 10) / 10.0;
+            double fileSize = Math.round(files[i].length() / 1000000.0 * 10) / 10.0;
             totalSize += fileSize;
             try {
-                mmr.setDataSource(file[i].getPath());
+                mmr.setDataSource(files[i].getPath());
                 artist = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
                 if(artist == null)
                     artist = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUMARTIST);
@@ -211,7 +227,7 @@ public class FilesFragment extends Fragment {
 
             if(title == null || title.equals("")){
                 artist = null;
-                title = file[i].getName();
+                title = files[i].getName();
             }
 
             if(duration != -1){
@@ -233,10 +249,10 @@ public class FilesFragment extends Fragment {
                     time = hours + ":" + minutes + ":" + seconds;
             }
 
-            filesData.add(new DoubleListItem(file[i].getPath(), false, String.format("%s%s", (artist == null) ? "" : artist + " - ", title), String.format("%s - %skbps - %sMB", time, (bitrate == -1 ? "???" : bitrate), fileSize), false));
+            filesData.add(new DoubleListItem(files[i].getPath(), false, String.format("%s%s", (artist == null) ? "" : artist + " - ", title), String.format("%s - %skbps - %sMB", time, (bitrate == -1 ? "???" : bitrate), fileSize), false));
         }
         String fileSuffix = "MB";
-        if(totalSize/1000 > 0) {
+        if(totalSize/1000 >= 0) {
             totalSize = Math.round(totalSize / 1000.0 * 10) / 10.0;
             fileSuffix = "GB";
         }else

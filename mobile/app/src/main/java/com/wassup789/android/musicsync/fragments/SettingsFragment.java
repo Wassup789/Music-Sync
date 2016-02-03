@@ -4,29 +4,21 @@ import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v4.content.ContextCompat;
 import android.text.InputType;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.CompoundButton;
-import android.widget.GridLayout;
-import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.Switch;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
-import com.afollestad.materialdialogs.Theme;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -46,7 +38,6 @@ import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.List;
 
 public class SettingsFragment extends Fragment {
 
@@ -71,15 +62,15 @@ public class SettingsFragment extends Fragment {
 
         final ArrayList<DoubleListItem> data = new ArrayList<DoubleListItem>();
         data.add(new DoubleListItem("divider_general", true,  "General", null, false));
-        data.add(new DoubleListItem("toggleMusicSync", false, "Enable Music Sync", null, true).setSwitchValue(settings.getBoolean("refreshToggle", default_refreshToggle)));
-        data.add(new DoubleListItem("editRefreshInterval", false, "Edit Refresh Interval", "Edit the playlist refresh interval (in minutes)", false));
+        data.add(new DoubleListItem("toggleMusicSync", false, getString(R.string.enableMusicSync_label), null, true).setSwitchValue(settings.getBoolean("refreshToggle", default_refreshToggle)));
+        data.add(new DoubleListItem("editRefreshInterval", false, getString(R.string.refreshToggle_label), getString(R.string.refreshToggle_desc), false));
         data.add(new DoubleListItem("divider_serverSettings", true,  "Server Settings", null, false));
-        data.add(new DoubleListItem("selectServer", false, "Select Server", null, false));
-        data.add(new DoubleListItem("editPlaylists", false, "Edit Playlists", "Edit the playlist list", false));
-        data.add(new DoubleListItem("forceRefresh", false, "Force Refresh", null, false));
+        data.add(new DoubleListItem("selectServer", false, getString(R.string.selectServer_label), null, false));
+        data.add(new DoubleListItem("editPlaylists", false, getString(R.string.editPlaylists_label), getString(R.string.editPlaylists_desc), false ));
+        data.add(new DoubleListItem("forceRefresh", false, getString(R.string.forceRefresh_label), null, false));
         data.add(new DoubleListItem("divider_remove", true,  "Cleanup", null, false));
-        data.add(new DoubleListItem("removeOldPlaylists", false, "Remove Old Playlists", "Remove playlist files that are not in the playlist list", false));
-        data.add(new DoubleListItem("removeAllFiles", false, "Remove All Files", "Removes all media files created", false));
+        data.add(new DoubleListItem("removeOldPlaylists", false, getString(R.string.removeOldPlaylistFiles_label), getString(R.string.removeOldPlaylistFiles_desc), false));
+        data.add(new DoubleListItem("removeAllFiles", false, getString(R.string.removeAllFiles_label), getString(R.string.removeAllFiles_desc), false));
 
         ListView list = DoubleListItemAdapter.getListView(getContext(), (ListView) view.findViewById(R.id.settingsListView), data, new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -373,26 +364,35 @@ public class SettingsFragment extends Fragment {
             }
         });
         int playlistsDeleted = 0;
-        if(playlists.length > 0) {
-            for (int i = 0; i < directories.length; i++) {
-                Boolean isValid = false;
-                for (int ii = 0; ii < playlists.length; ii++) {
-                    if (directories[i].equals(playlists[ii])) {
-                        isValid = true;
-                        break;
-                    }
-                }
-                if (!isValid) {
-                    File removeDir = new File(BackgroundService.mediaDirectory + directories[i]);
-                    File[] removeFiles = removeDir.listFiles();
-                    for (int ii = 0; ii < removeFiles.length; ii++) {
-                        removeFiles[ii].delete();
-                    }
-                    removeDir.delete();
-                    playlistsDeleted++;
+        double totalSizeDeleted = 0;
+        for (int i = 0; i < directories.length; i++) {
+            Boolean isValid = false;
+            for (int ii = 0; ii < playlists.length; ii++) {
+                if (directories[i].equals(playlists[ii])) {
+                    isValid = true;
+                    break;
                 }
             }
+            if (!isValid) {
+                File removeDir = new File(BackgroundService.mediaDirectory + directories[i]);
+                File[] removeFiles = removeDir.listFiles();
+                for (int j = 0; j < removeFiles.length; j++) {
+                    double fileSize = Math.round(removeFiles[j].length() / 1000000.0 * 10) / 10.0;
+                    totalSizeDeleted += fileSize;
+                    removeFiles[j].delete();
+                }
+                removeDir.delete();
+                playlistsDeleted++;
+            }
         }
+
+        String fileSuffix = "MB";
+        if(totalSizeDeleted/1000 >= 1) {
+            totalSizeDeleted = Math.round(totalSizeDeleted / 1000.0 * 10) / 10.0;
+            fileSuffix = "GB";
+        }else
+            totalSizeDeleted = Math.round(totalSizeDeleted * 10) / 10.0;
+
         long stopTime = System.nanoTime();
 
         if(stopTime - startTime < 5e8) {
@@ -404,6 +404,8 @@ public class SettingsFragment extends Fragment {
         }
 
         final int finalPlaylistsDeleted = playlistsDeleted;
+        final double finalTotalSizeDeleted = totalSizeDeleted;
+        final String finalFileSuffix = fileSuffix;
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -412,7 +414,7 @@ public class SettingsFragment extends Fragment {
 
                 new MaterialDialog.Builder(getActivity())
                         .title(R.string.dialog_removingoldplaylists)
-                        .content(String.format("Removed %d playlists", finalPlaylistsDeleted))
+                        .content(String.format("Removed %d playlist(s)\nRemoved %s%s", finalPlaylistsDeleted, finalTotalSizeDeleted, finalFileSuffix))
                         .positiveText(R.string.dialog_done)
                         .show();
             }

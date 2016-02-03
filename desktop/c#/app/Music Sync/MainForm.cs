@@ -1,5 +1,4 @@
 ﻿using MusicSync.JSONObjects;
-using NetFwTypeLib;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -159,6 +158,9 @@ namespace MusicSync
         {
             FolderBrowserDialog fbd = new FolderBrowserDialog();
             DialogResult result = fbd.ShowDialog();
+
+            CommonOpenFileDialog test = new CommonOpenFileDialog();
+
             if (result == DialogResult.Abort || result == DialogResult.Cancel)
                 return "___EXIT___";
             if (fbd.SelectedPath == "")
@@ -204,6 +206,7 @@ namespace MusicSync
         {
             System.Drawing.Size size = new System.Drawing.Size(300, 70);
             Form inputBox = new Form();
+            inputBox.StartPosition = FormStartPosition.CenterParent;
 
             inputBox.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             inputBox.ClientSize = size;
@@ -360,6 +363,7 @@ namespace MusicSync
         {
             Program.hasFormLoaded = false;
             this.Show();
+            this.Focus();
         }
         //END OF SYSTEM TRAY
 
