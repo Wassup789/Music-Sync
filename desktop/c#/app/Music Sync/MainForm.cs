@@ -159,8 +159,6 @@ namespace MusicSync
             FolderBrowserDialog fbd = new FolderBrowserDialog();
             DialogResult result = fbd.ShowDialog();
 
-            CommonOpenFileDialog test = new CommonOpenFileDialog();
-
             if (result == DialogResult.Abort || result == DialogResult.Cancel)
                 return "___EXIT___";
             if (fbd.SelectedPath == "")
