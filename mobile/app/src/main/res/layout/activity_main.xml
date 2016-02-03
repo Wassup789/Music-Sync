@@ -11,7 +11,7 @@
         android:layout_height="?attr/actionBarSize"
         android:background="#F57C00"
         android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-        app:popupTheme="@style/Toolbar"
+        app:popupTheme="@style/Theme.AppCompat.Light.DarkActionBar"
         />
 
     <com.astuetz.PagerSlidingTabStrip

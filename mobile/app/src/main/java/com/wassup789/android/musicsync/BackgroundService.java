@@ -47,7 +47,7 @@ import java.util.TimerTask;
 
 public class BackgroundService extends Service {
     private final IBinder mBinder = new LocalBinder();
-    public static final String mainDirectory = Environment.getExternalStorageDirectory() + "/musicsync/";
+    public static final String mainDirectory = Environment.getExternalStorageDirectory() + "/MusicSync/";
     public static final String mediaDirectory = mainDirectory + "files/";
     public static final int notificationID = 0;
     public static final int notificationIDComplete = notificationID + 1;

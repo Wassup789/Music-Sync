@@ -3,20 +3,23 @@
 
     <string name="app_name">Music Sync</string>
 
-    <string name="select_server_label">Select Server</string>
-    <string name="select_playlists_label">Select playlists</string>
-
-    <string name="refresh_toggle_label">Enable</string>
-    <string name="refresh_interval_label">Refresh Interval (in minutes)</string>
+    <string name="enableMusicSync_label">Enable Music Sync</string>
+    <string name="refreshToggle_label">Edit Refresh Interval</string>
+    <string name="refreshToggle_desc">Edit the playlist refresh interval (in minutes)</string>
+    <string name="selectServer_label">Select a Server</string>
+    <string name="editPlaylists_label">Edit playlists</string>
+    <string name="editPlaylists_desc">Edit the playlists list</string>
+    <string name="forceRefresh_label">Force Refresh</string>
+    <string name="removeOldPlaylistFiles_label">Remove Old Playlist</string>
+    <string name="removeOldPlaylistFiles_desc">Remove playlist files that are not in the playlist list</string>
+    <string name="removeAllFiles_label">Remove All Files</string>
+    <string name="removeAllFiles_desc">Removes all media files created</string>
 
     <string name="statistics_status_label">Status: </string>
     <string name="statistics_current_playlist_label">Current Playlist: </string>
     <string name="statistics_download_label">Files left: </string>
     <string name="statistics_current_download_label">Current Download: </string>
 
-    <string name="force_refresh_label">Force Refresh</string>
-    <string name="removeallfiles_label">Remove All Files</string>
-    <string name="removeoldplaylistfiles_label">Remove Old Playlist Files</string>
 
     <string name="dialog_okay">Okay</string>
     <string name="dialog_dismiss">Dismiss</string>
@@ -46,6 +49,6 @@
 
     <string name="dialog_playlistsSelection_title">Select playlist(s)</string>
 
-    <string name="dialog_selectServer_title">Select Server</string>
+    <string name="dialog_selectServer_title">Select a Server</string>
     <string name="dialog_selectServer_hint">Server URL</string>
 </resources>
