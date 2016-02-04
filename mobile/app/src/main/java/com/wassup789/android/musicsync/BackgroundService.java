@@ -21,6 +21,7 @@ import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 import com.wassup789.android.musicsync.fragments.SettingsFragment;
 import com.wassup789.android.musicsync.objectClasses.MediaInformation;
@@ -104,15 +105,19 @@ public class BackgroundService extends Service {
         @Override
         public void run() {
             //removeOldPlaylists();
-            String[] playlists = new Gson().fromJson(settings.getString("playlists", SettingsFragment.default_playlists), String[].class);
-            for(int i = 0; i < playlists.length; i++){
-                if(playlists[i].equals(SettingsFragment.default_playlist))
-                    break;
-                else
-                    update(playlists[i]);
+            try {
+                String[] playlists = new Gson().fromJson(settings.getString("playlists", SettingsFragment.default_playlists), String[].class);
+                for (int i = 0; i < playlists.length; i++) {
+                    if (playlists[i].equals(SettingsFragment.default_playlist))
+                        break;
+                    else
+                        update(playlists[i]);
+                }
+                sendMessage(100, "Sleeping");
+                isRunning = false;
+            } catch (JsonParseException e) {
+                e.printStackTrace();
             }
-            sendMessage(100, "Sleeping");
-            isRunning = false;
         }
     };
 
@@ -178,7 +183,11 @@ public class BackgroundService extends Service {
         sendMessage(103, playlistName);
         try {
             URL verifyUrl = new URL(serverUrl + "verify.php?q=" + Base64.encodeToString(playlistName.getBytes(), Base64.DEFAULT));
-            BufferedReader in = new BufferedReader(new InputStreamReader(verifyUrl.openStream()));
+            URLConnection urlConnection = verifyUrl.openConnection();
+            urlConnection.setConnectTimeout(5000);
+            urlConnection.connect();
+
+            BufferedReader in = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
 
             String inputLine;
             String data = "";
@@ -192,7 +201,10 @@ public class BackgroundService extends Service {
             }
 
             URL getFilesUrl = new URL(serverUrl + "getfiles.php?q=" + Base64.encodeToString(playlistName.getBytes(), Base64.DEFAULT));
-            in = new BufferedReader(new InputStreamReader(getFilesUrl.openStream()));
+            urlConnection = getFilesUrl.openConnection();
+            urlConnection.setConnectTimeout(5000);
+            urlConnection.connect();
+            in = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
 
             String inputLine2;
             data = "";
@@ -248,7 +260,7 @@ public class BackgroundService extends Service {
 
             for (int i = 0; i < output.size(); i++) {
                 try {
-                    sendMessage(101, String.format("%d (%d%% downloaded)", (output.size() - i), (int)Math.round(((double) i / output.size()) * 100)));
+                    sendMessage(101, String.format("%d (%d%% downloaded)", (output.size() - i), (int) Math.round(((double) i / output.size()) * 100)));
                     sendMessage(102, output.get(i).name);
                     if (failedDownloads > 0)
                         failedDownloadString = String.format("\n%d files failed to download", failedDownloads);
@@ -270,6 +282,7 @@ public class BackgroundService extends Service {
 
                     URL downloadUrl = new URL(serverUrl + "download.php?q=" + output.get(i).name_b64);
                     URLConnection connection = downloadUrl.openConnection();
+                    connection.setConnectTimeout(5000);
                     connection.connect();
 
                     // download the file
@@ -308,6 +321,7 @@ public class BackgroundService extends Service {
                     );
             notificationManager.notify(notificationIDComplete, mBuilder.build());
 
+            sendMessage(100, "Updating Playlist");//This is put outside of class for static void reasons
             updatePlaylist(playlistName);
         } catch (IOException e) {
             Log.e("BackgroundService", "An error has occurred whilst updating the media files.");
@@ -315,8 +329,7 @@ public class BackgroundService extends Service {
         }
     }
 
-    public void updatePlaylist(String playlistName) {
-        sendMessage(100, "Updating Playlist");
+    public static void updatePlaylist(String playlistName) {
         try {
             Log.i("BackgroundService", "Generating playlist");
             File f = new File(mediaDirectory + playlistName + "/");
@@ -336,6 +349,8 @@ public class BackgroundService extends Service {
                     MediaMetadataRetriever mmr = new MediaMetadataRetriever();
                     mmr.setDataSource(mediaDirectory + playlistName + "/" + mediaFiles[i].getName());
                     String artist = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
+                    if(artist == null)
+                        artist = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUMARTIST);
                     String title = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE);
                     String duration = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
                     mmr.release();
@@ -346,14 +361,14 @@ public class BackgroundService extends Service {
                     bufferedWriter.newLine();
                     bufferedWriter.newLine();
                 } catch (RuntimeException e) {
+                    Log.w(BackgroundService.class.getName(), String.format("Unable to retrieve MediaMetadata from \"%s\"", mediaFiles[i].getName()));
                     bufferedWriter.write((mediaDirectory + playlistName + "/" + mediaFiles[i].getName()).toString());
                     bufferedWriter.newLine();
-                    e.printStackTrace();
                 }
             }
             bufferedWriter.close();
             outputStream.close();
-            Log.i("BackgroundService", "Playlist generated");
+            Log.i("BackgroundService", String.format("Playlist: \"%s\" generated", playlistName));
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -10,6 +10,7 @@
     <string name="editPlaylists_label">Edit playlists</string>
     <string name="editPlaylists_desc">Edit the playlists list</string>
     <string name="forceRefresh_label">Force Refresh</string>
+    <string name="regeneratePlaylists_label">Regenerate Playlists</string>
     <string name="removeOldPlaylistFiles_label">Remove Old Playlist</string>
     <string name="removeOldPlaylistFiles_desc">Remove playlist files that are not in the playlist list</string>
     <string name="removeAllFiles_label">Remove All Files</string>

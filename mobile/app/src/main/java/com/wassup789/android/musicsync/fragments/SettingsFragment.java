@@ -68,6 +68,7 @@ public class SettingsFragment extends Fragment {
         data.add(new DoubleListItem("selectServer", false, getString(R.string.selectServer_label), null, false));
         data.add(new DoubleListItem("editPlaylists", false, getString(R.string.editPlaylists_label), getString(R.string.editPlaylists_desc), false ));
         data.add(new DoubleListItem("forceRefresh", false, getString(R.string.forceRefresh_label), null, false));
+        data.add(new DoubleListItem("regeneratePlaylists", false, getString(R.string.regeneratePlaylists_label), null, false));
         data.add(new DoubleListItem("divider_remove", true,  "Cleanup", null, false));
         data.add(new DoubleListItem("removeOldPlaylists", false, getString(R.string.removeOldPlaylistFiles_label), getString(R.string.removeOldPlaylistFiles_desc), false));
         data.add(new DoubleListItem("removeAllFiles", false, getString(R.string.removeAllFiles_label), getString(R.string.removeAllFiles_desc), false));
@@ -91,13 +92,13 @@ public class SettingsFragment extends Fragment {
             public void onItemClick(AdapterView<?> adapter, View view, int position, long l) {
                 DoubleListItem item = (DoubleListItem) adapter.getItemAtPosition(position);
 
-                switch(item.name){
+                switch (item.name) {
                     case "toggleMusicSync":
                         if (item.listSwitch != null) {
                             setMusicSync(!item.listSwitch.isChecked());
                             fromListViewChecked = true;
                             item.listSwitch.setChecked(!item.listSwitch.isChecked());
-                        }else
+                        } else
                             Toast.makeText(getActivity(), "Unable to save setting", Toast.LENGTH_LONG).show();
                         break;
                     case "editRefreshInterval":
@@ -117,6 +118,11 @@ public class SettingsFragment extends Fragment {
                         break;
                     case "forceRefresh":
                         forceRefresh();
+                        break;
+                    case "regeneratePlaylists":
+                        Toast.makeText(getActivity(), "Generating playlists", Toast.LENGTH_SHORT).show();
+
+                        new GeneratePlaylistsAsync().execute();
                         break;
                     case "removeOldPlaylists":
                         oldPlaylistsDialog = new MaterialDialog.Builder(getActivity())
@@ -173,12 +179,16 @@ public class SettingsFragment extends Fragment {
                 .title(R.string.dialog_setrefreshinterval)
                 .content(R.string.dialog_setrefreshinterval_content)
                 .inputType(InputType.TYPE_CLASS_NUMBER)
-                .inputRange(1, 10)
+                .inputRange(1, 5)
                 .positiveText(R.string.dialog_save)
                 .input(getString(R.string.dialog_setrefreshinterval_default), "" + settings.getInt("refreshInterval", default_refreshInterval), false, new MaterialDialog.InputCallback() {
                     @Override
                     public void onInput(MaterialDialog dialog, CharSequence input) {
                         int value = Integer.parseInt(input.toString());
+                        if (value <= 0) {
+                            Toast.makeText(getActivity(), "Invalid interval value", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
 
                         SharedPreferences settings = getActivity().getSharedPreferences("settings", Context.MODE_PRIVATE);
                         SharedPreferences.Editor settingsEditor = settings.edit();
@@ -340,6 +350,27 @@ public class SettingsFragment extends Fragment {
         NotificationManager notificationManager = (NotificationManager) getContext().getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.cancel(BackgroundService.notificationID);
         getActivity().startService(intent);
+    }
+
+    public class GeneratePlaylistsAsync extends AsyncTask<Void, Void, Void> {
+        protected Void doInBackground(Void... strings) {
+            generatePlaylists();
+            return null;
+        }
+
+        protected void onProgressUpdate(Integer... progress) {}
+        protected void onPostExecute(Long result) {}
+    }
+
+    public void generatePlaylists(){
+        SharedPreferences settings = getActivity().getSharedPreferences("settings", Context.MODE_PRIVATE);
+        String[] playlists = new Gson().fromJson(settings.getString("playlists", SettingsFragment.default_playlists), String[].class);
+        for (int i = 0; i < playlists.length; i++) {
+            if (playlists[i].equals(SettingsFragment.default_playlist))
+                break;
+            else
+                BackgroundService.updatePlaylist(playlists[i]);
+        }
     }
 
     public class RemoveOldPlaylistsAsync extends AsyncTask<Void, Void, Void> {

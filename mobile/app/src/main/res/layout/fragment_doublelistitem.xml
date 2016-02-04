@@ -50,11 +50,11 @@
             android:layout_column="1"
             android:layout_gravity="center_vertical|right"
             android:visibility="visible"
-            android:layout_marginRight="30dp"
             android:textSize="0px"
             android:layout_alignParentTop="true"
             android:layout_alignParentEnd="true"
-            android:layout_alignBottom="@+id/listViewContent" />
+            android:layout_alignBottom="@+id/listViewContent"
+            android:paddingRight="30dp" />
     </RelativeLayout>
 
     <TextView
@@ -63,8 +63,8 @@
         android:text="Divider"
         android:id="@+id/listViewDivider"
         android:textColor="?attr/colorAccent"
-        android:layout_marginLeft="18dp"
         android:paddingTop="6dp"
-        android:paddingBottom="6dp" />
+        android:paddingBottom="6dp"
+        android:paddingLeft="18dp" />
 
 </FrameLayout>

@@ -51,11 +51,15 @@
                 <ListView
                     android:layout_width="fill_parent"
                     android:layout_height="fill_parent"
-                    android:id="@+id/playlistsListView" />
+                    android:id="@+id/playlistsListView"
+                    android:fastScrollEnabled="false"
+                    android:fastScrollAlwaysVisible="false" />
                 <ListView
                     android:layout_width="fill_parent"
                     android:layout_height="fill_parent"
-                    android:id="@+id/filesListView" />
+                    android:id="@+id/filesListView"
+                    android:fastScrollAlwaysVisible="false"
+                    android:fastScrollEnabled="true" />
             </LinearLayout>
 
         </FrameLayout>
