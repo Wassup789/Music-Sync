@@ -32,14 +32,17 @@ public class DoubleListItemAdapter {
                 DoubleListItem item = data.get(position);
                 if(item.isDivider){
                     listViewContent.setVisibility(View.GONE);
-                    listSwitch.setVisibility(View.GONE);
                     listDivider.setVisibility(View.VISIBLE);
+                    listSwitch.setVisibility(View.GONE);
+
                     listDivider.setText(item.title);
 
                     if(item.textColor != -1)
                         listDivider.setTextColor(item.textColor);
                 }else{
                     listDivider.setVisibility(View.GONE);
+                    listViewContent.setVisibility(View.VISIBLE);
+
                     listTitle.setText(item.title);
 
                     if(item.subTitle == null)
