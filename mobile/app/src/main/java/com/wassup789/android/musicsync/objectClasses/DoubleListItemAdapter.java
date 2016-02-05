@@ -47,8 +47,10 @@ public class DoubleListItemAdapter {
 
                     if(item.subTitle == null)
                         listSubtitle.setVisibility(View.GONE);
-                    else
+                    else {
+                        listSubtitle.setVisibility(View.VISIBLE);
                         listSubtitle.setText(item.subTitle);
+                    }
 
                     if(!item.useSwitch)
                         listSwitch.setVisibility(View.GONE);
@@ -56,7 +58,8 @@ public class DoubleListItemAdapter {
                         listSwitch.setVisibility(View.VISIBLE);
                         if(item.switchval != -1){
                             listSwitch.setChecked(item.switchval == 1 ? true : false);
-                        }
+                        }else
+                            listSwitch.setChecked(false);
                         item.setSwitch(listSwitch);
                         listSwitch.setText("" + position);
                         if(onCheckedListener != null)
