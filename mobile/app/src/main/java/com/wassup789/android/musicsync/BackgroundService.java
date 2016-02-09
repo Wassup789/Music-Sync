@@ -2,6 +2,7 @@ package com.wassup789.android.musicsync;
 
 import android.Manifest;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -170,8 +171,10 @@ public class BackgroundService extends Service {
                     .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.drawable.ic_file_download_black_48dp))
                     .setSmallIcon(R.drawable.ic_headset_black_48dp)
                     .setContentTitle("Missing permission: storage")
+                    .setContentIntent(PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP), 0))
                     .setAutoCancel(true);
-            notificationManager.notify(notificationIDPermMissing, mBuilder.build());
+            if(!MainActivity.isActivityActiviated)
+                notificationManager.notify(notificationIDPermMissing, mBuilder.build());
             return;
         }
 
@@ -274,9 +277,11 @@ public class BackgroundService extends Service {
                                             .setSummaryText(output.get(i).name)
                             )
                             .setProgress(output.size(), i, false)
-                            .setOngoing(true);
+                            .setOngoing(true)
+                            .setContentIntent(PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP), 0));
 
-                    notificationManager.notify(notificationID, mBuilder.build());
+                    if(!MainActivity.isActivityActiviated)
+                        notificationManager.notify(notificationID, mBuilder.build());
 
                     Log.i("BackgroundService", String.format("Downloading: \"%s\"", output.get(i).name));
 
@@ -318,8 +323,11 @@ public class BackgroundService extends Service {
                     .setContentText(String.format("%d files downloaded", (output.size() - failedDownloads)))
                     .setStyle(new NotificationCompat.BigTextStyle()
                                     .bigText(String.format("%d files downloaded%s", (output.size() - failedDownloads), failedDownloadString))
-                    );
-            notificationManager.notify(notificationIDComplete, mBuilder.build());
+                    )
+                    .setContentIntent(PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP), 0))
+                    .setAutoCancel(true);
+            if(!MainActivity.isActivityActiviated)
+                notificationManager.notify(notificationIDComplete, mBuilder.build());
 
             sendMessage(100, "Updating Playlist");//This is put outside of class for static void reasons
             updatePlaylist(playlistName);

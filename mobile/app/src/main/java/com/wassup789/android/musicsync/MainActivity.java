@@ -1,6 +1,8 @@
 package com.wassup789.android.musicsync;
 
 import android.Manifest;
+import android.app.NotificationManager;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -30,6 +32,19 @@ public class MainActivity extends AppCompatActivity {
     ViewPager pager;
     public static MyResultReceiver resultReceiver;
     public static Boolean hasStartedBackground = false;
+    public static boolean isActivityActiviated = false;
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        isActivityActiviated = true;
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        isActivityActiviated = false;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,6 +83,11 @@ public class MainActivity extends AppCompatActivity {
             startService(intent);
             hasStartedBackground = true;
         }
+
+        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.cancel(BackgroundService.notificationID);
+        notificationManager.cancel(BackgroundService.notificationIDComplete);
+        notificationManager.cancel(BackgroundService.notificationIDPermMissing);
     }
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
         switch (requestCode) {
