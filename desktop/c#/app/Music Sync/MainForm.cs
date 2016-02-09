@@ -79,6 +79,7 @@ namespace MusicSync
                 }
                 resetPlaylistListView();
             }
+            Program.settings = settings;
         }
         
         private void savePortButton_Click(object sender, EventArgs e)
@@ -306,7 +307,7 @@ namespace MusicSync
                         restartServerButton.Enabled = false;
                         getServerIPButton.Enabled = false;
                         break;
-                    case "Running":
+                    case "Running"://18445957429
                         startServerButton.Enabled = false;
                         stopServerButton.Enabled = true;
                         restartServerButton.Enabled = true;

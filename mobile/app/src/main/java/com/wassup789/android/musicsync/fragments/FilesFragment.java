@@ -92,7 +92,7 @@ public class FilesFragment extends Fragment {
             else{
                 File f = new File(BackgroundService.mediaDirectory + playlists[i]);
                 if(!f.exists() && !f.isDirectory())
-                    data.add(new DoubleListItem(playlists[i], false, playlists[i], null, false));
+                    data.add(new DoubleListItem(playlists[i], false, playlists[i], String.format("Total Files: %d | Total Size: %s%s", 0, "0.0", "MB"), false));
                 else {
                     double totalSize = 0;
                     File[] files = f.listFiles();
@@ -150,12 +150,27 @@ public class FilesFragment extends Fragment {
 
             File f = new File(BackgroundService.mediaDirectory + item.name + "/");
             ArrayList<DoubleListItem> filesData = new ArrayList<DoubleListItem>();
-            if (!f.exists())
+            if (!f.exists()) {
+                filesData.add(new DoubleListItem("divider_filepath", true, String.format("File Path: %s/", f.getPath()), null, false).setTextColor(Color.parseColor("#777777")));
+                filesData.add(new DoubleListItem("divider_totalfiles", true, String.format("Total Files: %d", 0), null, false).setTextColor(Color.parseColor("#777777")));
+                filesData.add(2, new DoubleListItem("divider_totalsize", true, String.format("Total Size: %s%s", "0.0", "MB"), null, false).setTextColor(Color.parseColor("#777777")));
+                filesData.add(new DoubleListItem("nofilesfound", false, "No Files Found", null, false));
+                ListView filesList = DoubleListItemAdapter.getListView(getContext(), (ListView) getActivity().findViewById(R.id.filesListView), filesData, null);
+                filesList.setVisibility(View.VISIBLE);
+                filesList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> adapter, View view, int position, long l) {
+                        DoubleListItem item = (DoubleListItem) adapter.getItemAtPosition(position);
+                        playAudio(item.name);
+                    }
+                });
                 return;
+            }
             File[] files = f.listFiles();
             filesData.add(new DoubleListItem("divider_filepath", true, String.format("File Path: %s/", f.getPath()), null, false).setTextColor(Color.parseColor("#777777")));
             filesData.add(new DoubleListItem("divider_totalfiles", true, String.format("Total Files: %d", files.length), null, false).setTextColor(Color.parseColor("#777777")));
-            MediaMetadataRetriever mmr = new MediaMetadataRetriever();
+            if(files.length == 0)
+                filesData.add(new DoubleListItem("nofilesfound", false, "No Files Found", null, false));
             double totalSize = 0;
             for (int i = 0; i < files.length; i++) {
                 double fileSize = Math.round(files[i].length() / 1000000.0 * 10) / 10.0;
@@ -200,11 +215,35 @@ public class FilesFragment extends Fragment {
     public void getFileMetadata(String name){
         File f = new File(BackgroundService.mediaDirectory + name + "/");
         final ArrayList<DoubleListItem> filesData = new ArrayList<DoubleListItem>();
-        if(!f.exists())
+        if(!f.exists()) {
+            filesData.add(new DoubleListItem("divider_filepath", true, String.format("File Path: %s/", f.getPath()), null, false).setTextColor(Color.parseColor("#777777")));
+            filesData.add(new DoubleListItem("divider_totalfiles", true, String.format("Total Files: %d", 0), null, false).setTextColor(Color.parseColor("#777777")));
+            filesData.add(2, new DoubleListItem("divider_totalsize", true, String.format("Total Size: %s%s", "0.0", "MB"), null, false).setTextColor(Color.parseColor("#777777")));
+            filesData.add(new DoubleListItem("nofilesfound", false, "No Files Found", null, false));
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (!metadataDialog.isCancelled())
+                        metadataDialog.cancel();
+
+                    ListView filesList = DoubleListItemAdapter.getListView(getContext(), (ListView) getActivity().findViewById(R.id.filesListView), filesData, null);
+                    filesList.setVisibility(View.VISIBLE);
+                    filesList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                        @Override
+                        public void onItemClick(AdapterView<?> adapter, View view, int position, long l) {
+                            DoubleListItem item = (DoubleListItem) adapter.getItemAtPosition(position);
+                            playAudio(item.name);
+                        }
+                    });
+                }
+            });
             return;
+        }
         File[] files = f.listFiles();
         filesData.add(new DoubleListItem("divider_filepath", true, String.format("File Path: %s/", f.getPath()), null, false).setTextColor(Color.parseColor("#777777")));
         filesData.add(new DoubleListItem("divider_totalfiles", true, String.format("Total Files: %d", files.length), null, false).setTextColor(Color.parseColor("#777777")));
+        if(files.length == 0)
+            filesData.add(new DoubleListItem("nofilesfound", false, "No Files Found", null, false));
         MediaMetadataRetriever mmr = new MediaMetadataRetriever();
         double totalSize = 0;
         for (int i = 0; i < files.length; i++) {

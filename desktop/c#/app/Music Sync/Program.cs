@@ -21,7 +21,7 @@ namespace MusicSync
 
         static ManualResetEvent quitEvent = new ManualResetEvent(false);
 
-        private static Settings settings;
+        public static Settings settings;
         public static bool hasFormLoaded = false;
         public static WebServer ws;
 
