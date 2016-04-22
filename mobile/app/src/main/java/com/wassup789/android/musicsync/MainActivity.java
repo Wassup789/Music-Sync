@@ -2,16 +2,20 @@ package com.wassup789.android.musicsync;
 
 import android.Manifest;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.os.Handler;
 import android.os.ResultReceiver;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
@@ -88,6 +92,7 @@ public class MainActivity extends AppCompatActivity {
         notificationManager.cancel(BackgroundService.notificationID);
         notificationManager.cancel(BackgroundService.notificationIDComplete);
         notificationManager.cancel(BackgroundService.notificationIDPermMissing);
+        BackgroundService.totalFilesDownloaded = 0;
     }
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
         switch (requestCode) {

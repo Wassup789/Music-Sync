@@ -307,7 +307,7 @@ namespace MusicSync
                         restartServerButton.Enabled = false;
                         getServerIPButton.Enabled = false;
                         break;
-                    case "Running"://18445957429
+                    case "Running":
                         startServerButton.Enabled = false;
                         stopServerButton.Enabled = true;
                         restartServerButton.Enabled = true;

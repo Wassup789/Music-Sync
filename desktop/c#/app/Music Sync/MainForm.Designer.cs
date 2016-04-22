@@ -223,6 +223,7 @@
             // 
             this.columnHeader2.Tag = "";
             this.columnHeader2.Text = "Directory";
+            this.columnHeader2.Width = 303;
             // 
             // systemTrayIcon
             // 

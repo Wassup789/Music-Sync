@@ -9,12 +9,14 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.media.MediaMetadataRetriever;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.IBinder;
 import android.os.ResultReceiver;
+import android.service.notification.StatusBarNotification;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Base64;
@@ -54,6 +56,7 @@ public class BackgroundService extends Service {
     public static final int notificationID = 0;
     public static final int notificationIDComplete = notificationID + 1;
     public static final int notificationIDPermMissing = notificationID + 2;
+    public static int totalFilesDownloaded = 0;
 
     ResultReceiver resultReceiver;
     private SharedPreferences settings;
@@ -170,6 +173,7 @@ public class BackgroundService extends Service {
             NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this)
                     .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.drawable.ic_file_download_black_48dp))
                     .setSmallIcon(R.drawable.ic_headset_black_48dp)
+                    .setColor(Color.parseColor("#F57C00"))
                     .setContentTitle("Missing permission: storage")
                     .setContentIntent(PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP), 0))
                     .setAutoCancel(true);
@@ -258,6 +262,7 @@ public class BackgroundService extends Service {
             notificationManager.cancel(notificationIDComplete);
             notificationManager.cancel(notificationIDPermMissing);
 
+
             Log.i("BackgroundService", String.format("Start download of %d file(s)", output.size()));
             sendMessage(100, String.format("Downloading %d file(s)", output.size()));
 
@@ -269,7 +274,8 @@ public class BackgroundService extends Service {
                         failedDownloadString = String.format("\n%d files failed to download", failedDownloads);
                     NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this)
                             .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.drawable.ic_file_download_black_48dp))
-                            .setSmallIcon(R.drawable.ic_file_download_black_48dp)
+                            .setSmallIcon(R.drawable.ic_headset_black_48dp)
+                            .setColor(Color.parseColor("#F57C00"))
                             .setContentTitle("Downloading Music...")
                             .setContentText((i - failedDownloads) + "/" + (output.size() - failedDownloads) + " files downloaded")
                             .setStyle(new NotificationCompat.BigTextStyle()
@@ -318,14 +324,17 @@ public class BackgroundService extends Service {
             notificationManager.cancel(notificationID);
             NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this)
                     .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.drawable.ic_file_download_black_48dp))
-                    .setSmallIcon(R.drawable.ic_file_download_black_48dp)
+                    .setSmallIcon(R.drawable.ic_headset_black_48dp)
+                    .setColor(Color.parseColor("#F57C00"))
                     .setContentTitle("Download Complete")
-                    .setContentText(String.format("%d files downloaded", (output.size() - failedDownloads)))
+                    .setContentText(String.format("%d files downloaded", (totalFilesDownloaded + output.size() - failedDownloads)))
                     .setStyle(new NotificationCompat.BigTextStyle()
-                                    .bigText(String.format("%d files downloaded%s", (output.size() - failedDownloads), failedDownloadString))
+                                    .bigText(String.format("%d files downloaded%s", (totalFilesDownloaded + output.size() - failedDownloads), failedDownloadString))
                     )
+                    .setDeleteIntent(createOnDismissedIntent(this, notificationIDComplete))
                     .setContentIntent(PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP), 0))
                     .setAutoCancel(true);
+            totalFilesDownloaded += output.size();
             if(!MainActivity.isActivityActiviated)
                 notificationManager.notify(notificationIDComplete, mBuilder.build());
 
@@ -335,6 +344,14 @@ public class BackgroundService extends Service {
             Log.e("BackgroundService", "An error has occurred whilst updating the media files.");
             e.printStackTrace();
         }
+    }
+
+    private PendingIntent createOnDismissedIntent(Context context, int notificationId) {
+        Intent intent = new Intent(context, NotificationDismissedReceiver.class);
+        intent.putExtra("com.wassup789.android.musicsync.notificationId", notificationId);
+
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(context.getApplicationContext(), notificationId, intent, 0);
+        return pendingIntent;
     }
 
     public static void updatePlaylist(String playlistName) {

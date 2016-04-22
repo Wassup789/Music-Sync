@@ -155,6 +155,7 @@ public class FilesFragment extends Fragment {
                 filesData.add(new DoubleListItem("divider_totalfiles", true, String.format("Total Files: %d", 0), null, false).setTextColor(Color.parseColor("#777777")));
                 filesData.add(2, new DoubleListItem("divider_totalsize", true, String.format("Total Size: %s%s", "0.0", "MB"), null, false).setTextColor(Color.parseColor("#777777")));
                 filesData.add(new DoubleListItem("nofilesfound", false, "No Files Found", null, false));
+
                 ListView filesList = DoubleListItemAdapter.getListView(getContext(), (ListView) getActivity().findViewById(R.id.filesListView), filesData, null);
                 filesList.setVisibility(View.VISIBLE);
                 filesList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -169,8 +170,10 @@ public class FilesFragment extends Fragment {
             File[] files = f.listFiles();
             filesData.add(new DoubleListItem("divider_filepath", true, String.format("File Path: %s/", f.getPath()), null, false).setTextColor(Color.parseColor("#777777")));
             filesData.add(new DoubleListItem("divider_totalfiles", true, String.format("Total Files: %d", files.length), null, false).setTextColor(Color.parseColor("#777777")));
+
             if(files.length == 0)
                 filesData.add(new DoubleListItem("nofilesfound", false, "No Files Found", null, false));
+
             double totalSize = 0;
             for (int i = 0; i < files.length; i++) {
                 double fileSize = Math.round(files[i].length() / 1000000.0 * 10) / 10.0;
@@ -219,6 +222,7 @@ public class FilesFragment extends Fragment {
             filesData.add(new DoubleListItem("divider_filepath", true, String.format("File Path: %s/", f.getPath()), null, false).setTextColor(Color.parseColor("#777777")));
             filesData.add(new DoubleListItem("divider_totalfiles", true, String.format("Total Files: %d", 0), null, false).setTextColor(Color.parseColor("#777777")));
             filesData.add(2, new DoubleListItem("divider_totalsize", true, String.format("Total Size: %s%s", "0.0", "MB"), null, false).setTextColor(Color.parseColor("#777777")));
+
             filesData.add(new DoubleListItem("nofilesfound", false, "No Files Found", null, false));
             getActivity().runOnUiThread(new Runnable() {
                 @Override
@@ -244,6 +248,7 @@ public class FilesFragment extends Fragment {
         filesData.add(new DoubleListItem("divider_totalfiles", true, String.format("Total Files: %d", files.length), null, false).setTextColor(Color.parseColor("#777777")));
         if(files.length == 0)
             filesData.add(new DoubleListItem("nofilesfound", false, "No Files Found", null, false));
+
         MediaMetadataRetriever mmr = new MediaMetadataRetriever();
         double totalSize = 0;
         for (int i = 0; i < files.length; i++) {
