@@ -172,7 +172,7 @@ public class BackgroundService extends Service {
             NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
             NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this)
                     .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.drawable.ic_file_download_black_48dp))
-                    .setSmallIcon(R.drawable.ic_headset_black_48dp)
+                    .setSmallIcon(R.drawable.ic_headset_white_48dp)
                     .setColor(Color.parseColor("#F57C00"))
                     .setContentTitle("Missing permission: storage")
                     .setContentIntent(PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP), 0))
@@ -274,7 +274,7 @@ public class BackgroundService extends Service {
                         failedDownloadString = String.format("\n%d files failed to download", failedDownloads);
                     NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this)
                             .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.drawable.ic_file_download_black_48dp))
-                            .setSmallIcon(R.drawable.ic_headset_black_48dp)
+                            .setSmallIcon(R.drawable.ic_headset_white_48dp)
                             .setColor(Color.parseColor("#F57C00"))
                             .setContentTitle("Downloading Music...")
                             .setContentText((i - failedDownloads) + "/" + (output.size() - failedDownloads) + " files downloaded")
@@ -324,7 +324,7 @@ public class BackgroundService extends Service {
             notificationManager.cancel(notificationID);
             NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this)
                     .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.drawable.ic_file_download_black_48dp))
-                    .setSmallIcon(R.drawable.ic_headset_black_48dp)
+                    .setSmallIcon(R.drawable.ic_headset_white_48dp)
                     .setColor(Color.parseColor("#F57C00"))
                     .setContentTitle("Download Complete")
                     .setContentText(String.format("%d files downloaded", (totalFilesDownloaded + output.size() - failedDownloads)))
