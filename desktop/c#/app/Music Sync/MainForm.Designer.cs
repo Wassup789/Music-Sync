@@ -72,7 +72,7 @@
             this.serverGroupBox.Location = new System.Drawing.Point(12, 12);
             this.serverGroupBox.Name = "serverGroupBox";
             this.serverGroupBox.Size = new System.Drawing.Size(198, 108);
-            this.serverGroupBox.TabIndex = 1;
+            this.serverGroupBox.TabIndex = 0;
             this.serverGroupBox.TabStop = false;
             this.serverGroupBox.Text = "Server";
             // 
@@ -82,7 +82,7 @@
             this.getServerIPButton.Location = new System.Drawing.Point(95, 77);
             this.getServerIPButton.Name = "getServerIPButton";
             this.getServerIPButton.Size = new System.Drawing.Size(75, 23);
-            this.getServerIPButton.TabIndex = 6;
+            this.getServerIPButton.TabIndex = 3;
             this.getServerIPButton.Text = "Get IP";
             this.getServerIPButton.UseVisualStyleBackColor = true;
             this.getServerIPButton.Click += new System.EventHandler(this.getServerIPButton_Click);
@@ -158,7 +158,7 @@
             this.editPlaylistButton.Location = new System.Drawing.Point(87, 163);
             this.editPlaylistButton.Name = "editPlaylistButton";
             this.editPlaylistButton.Size = new System.Drawing.Size(75, 23);
-            this.editPlaylistButton.TabIndex = 4;
+            this.editPlaylistButton.TabIndex = 8;
             this.editPlaylistButton.Text = "Edit";
             this.editPlaylistButton.UseVisualStyleBackColor = true;
             this.editPlaylistButton.Click += new System.EventHandler(this.editPlaylistButton_Click);
@@ -169,7 +169,7 @@
             this.savePlaylistButton.Location = new System.Drawing.Point(283, 163);
             this.savePlaylistButton.Name = "savePlaylistButton";
             this.savePlaylistButton.Size = new System.Drawing.Size(75, 23);
-            this.savePlaylistButton.TabIndex = 3;
+            this.savePlaylistButton.TabIndex = 10;
             this.savePlaylistButton.Text = "Save";
             this.savePlaylistButton.UseVisualStyleBackColor = true;
             this.savePlaylistButton.Click += new System.EventHandler(this.savePlaylistButton_Click);
@@ -180,7 +180,7 @@
             this.deletePlaylistButton.Location = new System.Drawing.Point(168, 163);
             this.deletePlaylistButton.Name = "deletePlaylistButton";
             this.deletePlaylistButton.Size = new System.Drawing.Size(75, 23);
-            this.deletePlaylistButton.TabIndex = 2;
+            this.deletePlaylistButton.TabIndex = 9;
             this.deletePlaylistButton.Text = "Delete";
             this.deletePlaylistButton.UseVisualStyleBackColor = true;
             this.deletePlaylistButton.Click += new System.EventHandler(this.deletePlaylistButton_Click);
@@ -191,7 +191,7 @@
             this.addPlaylistButton.Location = new System.Drawing.Point(6, 163);
             this.addPlaylistButton.Name = "addPlaylistButton";
             this.addPlaylistButton.Size = new System.Drawing.Size(75, 23);
-            this.addPlaylistButton.TabIndex = 1;
+            this.addPlaylistButton.TabIndex = 7;
             this.addPlaylistButton.Text = "Add";
             this.addPlaylistButton.UseVisualStyleBackColor = true;
             this.addPlaylistButton.Click += new System.EventHandler(this.addPlaylistButton_Click);
@@ -207,11 +207,13 @@
             this.playlistListView.FullRowSelect = true;
             this.playlistListView.GridLines = true;
             this.playlistListView.Location = new System.Drawing.Point(6, 19);
+            this.playlistListView.MultiSelect = false;
             this.playlistListView.Name = "playlistListView";
             this.playlistListView.Size = new System.Drawing.Size(352, 138);
-            this.playlistListView.TabIndex = 0;
+            this.playlistListView.TabIndex = 6;
             this.playlistListView.UseCompatibleStateImageBehavior = false;
             this.playlistListView.View = System.Windows.Forms.View.Details;
+            this.playlistListView.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.playlistListView_MouseDoubleClick);
             // 
             // columnHeader1
             // 
@@ -286,7 +288,7 @@
             0});
             this.portInput.Name = "portInput";
             this.portInput.Size = new System.Drawing.Size(147, 20);
-            this.portInput.TabIndex = 1;
+            this.portInput.TabIndex = 4;
             this.portInput.Value = new decimal(new int[] {
             13163,
             0,
@@ -299,7 +301,7 @@
             this.savePortButton.Location = new System.Drawing.Point(113, 49);
             this.savePortButton.Name = "savePortButton";
             this.savePortButton.Size = new System.Drawing.Size(75, 23);
-            this.savePortButton.TabIndex = 2;
+            this.savePortButton.TabIndex = 5;
             this.savePortButton.Text = "Save";
             this.savePortButton.UseVisualStyleBackColor = true;
             this.savePortButton.Click += new System.EventHandler(this.savePortButton_Click);
@@ -312,7 +314,7 @@
             this.settingsGroupBox.Location = new System.Drawing.Point(12, 126);
             this.settingsGroupBox.Name = "settingsGroupBox";
             this.settingsGroupBox.Size = new System.Drawing.Size(198, 78);
-            this.settingsGroupBox.TabIndex = 0;
+            this.settingsGroupBox.TabIndex = 1;
             this.settingsGroupBox.TabStop = false;
             this.settingsGroupBox.Text = "Settings";
             // 

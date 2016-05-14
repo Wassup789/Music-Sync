@@ -118,6 +118,11 @@ namespace MusicSync
             item.SubItems.Add(subitem);
 
             playlistListView.Items.Add(item);
+
+            playlistListView.Items[playlistListView.Items.Count - 1].Selected = true;
+            playlistListView.Select();
+            editPlaylistButton_Click(sender, null);
+
             resetPlaylistListView();
         }
         private void editPlaylistButton_Click(object sender, EventArgs e)
@@ -390,6 +395,11 @@ namespace MusicSync
         {
             if(e.Button == MouseButtons.Left)
                 receiveFromTray();
+        }
+        
+        private void playlistListView_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            editPlaylistButton_Click(sender, null);
         }
     }
 }
