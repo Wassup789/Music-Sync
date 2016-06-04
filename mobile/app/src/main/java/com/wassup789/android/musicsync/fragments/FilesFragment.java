@@ -15,6 +15,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -44,9 +45,11 @@ public class FilesFragment extends Fragment {
             @Override
             public boolean onKey(View view, int keyCode, KeyEvent keyEvent) {
                 if(keyCode == KeyEvent.KEYCODE_BACK && isVisible()){
-                    if(isViewingPlaylist)
-                        setListViewDefault(view);
-                    else
+                    if(isViewingPlaylist) {
+                        FrameLayout loadingContainer = (FrameLayout) getActivity().findViewById(R.id.loadingContainer);
+                        loadingContainer.setVisibility(View.VISIBLE);
+                        new SetListViewDefaultAsync().execute();
+                    }else
                         return false;
                     return true;
                 }
@@ -66,32 +69,49 @@ public class FilesFragment extends Fragment {
             }
         });
 
-        setListViewDefault(view);
+        new SetListViewDefaultAsync().execute();
         return view;
     }
 
-    public void setListViewDefault(View view){
+
+    public class SetListViewDefaultAsync extends AsyncTask<String, Void, Void> {
+        protected Void doInBackground(String... strings) {
+            setListViewDefault();
+            return null;
+        }
+
+        protected void onProgressUpdate(Integer... progress) {}
+        protected void onPostExecute(Long result) {}
+    }
+
+    public void setListViewDefault() {
         isViewingPlaylist = false;
 
-        ListView filesList = (ListView) getActivity().findViewById(R.id.filesListView);
-        if(filesList != null)
-            filesList.setVisibility(View.GONE);
-        TextView title = (TextView) getActivity().findViewById(R.id.title);
-        if(title != null)
-            title.setText("Playlists:");
-        Button toggleButton = (Button) getActivity().findViewById(R.id.toggleButton);
-        if(toggleButton != null)
-            toggleButton.setVisibility(View.GONE);
+
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                ListView filesList = (ListView) getActivity().findViewById(R.id.filesListView);
+                if (filesList != null)
+                    filesList.setVisibility(View.GONE);
+                TextView title = (TextView) getActivity().findViewById(R.id.title);
+                if (title != null)
+                    title.setText("Playlists:");
+                Button toggleButton = (Button) getActivity().findViewById(R.id.toggleButton);
+                if (toggleButton != null)
+                    toggleButton.setVisibility(View.GONE);
+            }
+        });
 
         SharedPreferences settings = getActivity().getSharedPreferences("settings", Context.MODE_PRIVATE);
         ArrayList<DoubleListItem> data = new ArrayList<DoubleListItem>();
         String[] playlists = new Gson().fromJson(settings.getString("playlists", SettingsFragment.default_playlists), String[].class);
-        for(int i = 0; i < playlists.length; i++){
-            if(playlists[i].equals(SettingsFragment.default_playlist))
+        for (int i = 0; i < playlists.length; i++) {
+            if (playlists[i].equals(SettingsFragment.default_playlist))
                 break;
-            else{
+            else {
                 File f = new File(BackgroundService.mediaDirectory + playlists[i]);
-                if(!f.exists() && !f.isDirectory())
+                if (!f.exists() && !f.isDirectory())
                     data.add(new DoubleListItem(playlists[i], false, playlists[i], String.format("Total Files: %d | Total Size: %s%s", 0, "0.0", "MB"), false));
                 else {
                     double totalSize = 0;
@@ -101,10 +121,10 @@ public class FilesFragment extends Fragment {
                         totalSize += fileSize;
                     }
                     String fileSuffix = "MB";
-                    if(totalSize/1000 > 0) {
+                    if (totalSize / 1000 > 0) {
                         totalSize = Math.round(totalSize / 1000.0 * 10) / 10.0;
                         fileSuffix = "GB";
-                    }else
+                    } else
                         totalSize = Math.round(totalSize * 10) / 10.0;
 
                     data.add(new DoubleListItem(playlists[i], false, playlists[i], String.format("Total Files: %d | Total Size: %s%s", files.length, totalSize, fileSuffix), false));
@@ -112,22 +132,31 @@ public class FilesFragment extends Fragment {
             }
         }
 
-        final ListView list = DoubleListItemAdapter.getListView(getContext(), (ListView) view.findViewById(R.id.playlistsListView), data, null);
-        list.setVisibility(View.VISIBLE);
-        list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        final ArrayList<DoubleListItem> dataFinal = data;
+        getActivity().runOnUiThread(new Runnable() {
             @Override
-            public void onItemClick(AdapterView<?> adapter, View view, int position, long l) {
-                DoubleListItem item = (DoubleListItem) adapter.getItemAtPosition(position);
-                currentPlaylist = item;
+            public void run() {
+                FrameLayout loadingContainer = (FrameLayout) getActivity().findViewById(R.id.loadingContainer);
+                loadingContainer.setVisibility(View.GONE);
 
-                list.setVisibility(View.GONE);
+                final ListView list = DoubleListItemAdapter.getListView(getContext(), (ListView) getActivity().findViewById(R.id.playlistsListView), dataFinal, null);
+                list.setVisibility(View.VISIBLE);
+                list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> adapter, View view, int position, long l) {
+                        DoubleListItem item = (DoubleListItem) adapter.getItemAtPosition(position);
+                        currentPlaylist = item;
 
-                TextView title = (TextView) getActivity().findViewById(R.id.title);
-                title.setText(item.name.substring(0, 1).toUpperCase() + item.name.substring(1) + ":");
+                        list.setVisibility(View.GONE);
 
-                Button toggleButton = (Button) getActivity().findViewById(R.id.toggleButton);
-                toggleButton.setVisibility(View.VISIBLE);
-                setViewingMetadata(false, toggleButton, item);
+                        TextView title = (TextView) getActivity().findViewById(R.id.title);
+                        title.setText(item.name.substring(0, 1).toUpperCase() + item.name.substring(1) + ":");
+
+                        Button toggleButton = (Button) getActivity().findViewById(R.id.toggleButton);
+                        toggleButton.setVisibility(View.VISIBLE);
+                        setViewingMetadata(false, toggleButton, item);
+                    }
+                });
             }
         });
     }

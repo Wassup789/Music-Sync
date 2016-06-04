@@ -9,7 +9,9 @@ public class NotificationDismissedReceiver extends BroadcastReceiver{
     public void onReceive(Context context, Intent intent) {
         int notificationId = intent.getExtras().getInt("com.wassup789.android.musicsync.notificationId");
 
-        if(notificationId == BackgroundService.notificationIDComplete)
+        if(notificationId == BackgroundService.notificationIDComplete) {
             BackgroundService.totalFilesDownloaded = 0;
+            BackgroundService.filesDownloaded.clear();
+        }
     }
 }

@@ -46,6 +46,8 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -57,6 +59,7 @@ public class BackgroundService extends Service {
     public static final int notificationIDComplete = notificationID + 1;
     public static final int notificationIDPermMissing = notificationID + 2;
     public static int totalFilesDownloaded = 0;
+    public static ArrayList<String> filesDownloaded = new ArrayList<String>();
 
     ResultReceiver resultReceiver;
     private SharedPreferences settings;
@@ -279,13 +282,12 @@ public class BackgroundService extends Service {
                             .setContentTitle("Downloading Music...")
                             .setContentText((i - failedDownloads) + "/" + (output.size() - failedDownloads) + " files downloaded")
                             .setStyle(new NotificationCompat.BigTextStyle()
-                                            .bigText(String.format("%d/%d files downloaded%s", (i - failedDownloads), (output.size() - failedDownloads), failedDownloadString))
-                                            .setSummaryText(output.get(i).name)
+                                .bigText(String.format("%d/%d files downloaded%s", (i - failedDownloads), (output.size() - failedDownloads), failedDownloadString))
+                                .setSummaryText((Math.round(((i - failedDownloads + 0.0) / (output.size() - failedDownloads + 0.0)) * 1000.0) / 10.0) + "% downloaded")
                             )
-                            .setProgress(output.size(), i, false)
+                            .setProgress(output.size() - failedDownloads, i - failedDownloads, false)
                             .setOngoing(true)
-                            .setContentIntent(PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP), 0));
-
+                            .setContentIntent(PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP).putExtra("showDownloaded", true), 0));
                     if(!MainActivity.isActivityActiviated)
                         notificationManager.notify(notificationID, mBuilder.build());
 
@@ -308,6 +310,8 @@ public class BackgroundService extends Service {
                     outputs.flush();
                     outputs.close();
                     inputs.close();
+
+                    filesDownloaded.add(output.get(i).name);
                 } catch (FileNotFoundException e) {
                     Log.w("BackgroundService", String.format("File: \"%s\" failed to download", output.get(i).name));
                     Log.w("BackgroundService", String.format("URL: %sdownload.php?q=%s", serverUrl, output.get(i).name_b64));
@@ -332,8 +336,9 @@ public class BackgroundService extends Service {
                                     .bigText(String.format("%d files downloaded%s", (totalFilesDownloaded + output.size() - failedDownloads), failedDownloadString))
                     )
                     .setDeleteIntent(createOnDismissedIntent(this, notificationIDComplete))
-                    .setContentIntent(PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP), 0))
+                    .setContentIntent(PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP).putExtra("showDownloaded", true), 0))
                     .setAutoCancel(true);
+
             totalFilesDownloaded += output.size();
             if(!MainActivity.isActivityActiviated)
                 notificationManager.notify(notificationIDComplete, mBuilder.build());
@@ -358,7 +363,15 @@ public class BackgroundService extends Service {
         try {
             Log.i("BackgroundService", "Generating playlist");
             File f = new File(mediaDirectory + playlistName + "/");
-            File mediaFiles[] = f.listFiles();
+            File[] mediaFiles = f.listFiles();
+            /*Arrays.sort(mediaFiles, new Comparator<File>(){
+                public int compare(File f1, File f2)
+                {
+                    BasicFileAttributes attr = Files.readAttributes(file, BasicFileAttributes.class);
+                    return Long.compare(f1.lastModified(), f2.lastModified());
+                }
+            });*/
+            Arrays.sort(mediaFiles, Collections.<File>reverseOrder());
 
             File playlist = new File(mainDirectory + playlistName + ".m3u8");
 

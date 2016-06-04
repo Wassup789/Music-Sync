@@ -25,7 +25,8 @@
                     android:orientation="horizontal"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/listview_preborder">
+                    android:background="@drawable/listview_preborder"
+                    android:minHeight="48dp">
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -34,12 +35,11 @@
                         android:text="Playlists:"
                         android:id="@+id/title"
                         android:layout_gravity="center_vertical"
-                        android:layout_marginLeft="16dp"
-                        android:layout_marginTop="8dp"
-                        android:layout_marginBottom="12dp"
                         android:maxWidth="230dp"
                         android:ellipsize="end"
-                        android:singleLine="true" />
+                        android:singleLine="true"
+                        android:maxLines="1"
+                        android:paddingLeft="16dp" />
 
                     <Button
                         android:layout_width="wrap_content"
@@ -51,6 +51,19 @@
                         android:textColor="#FFFFFF" />
 
                 </GridLayout>
+
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:id="@+id/loadingContainer">
+
+                    <ProgressBar
+                        style="?android:attr/progressBarStyleLarge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/progressBar"
+                        android:layout_gravity="center" />
+                </FrameLayout>
 
                 <ListView
                     android:layout_width="fill_parent"
@@ -64,6 +77,7 @@
                     android:id="@+id/filesListView"
                     android:fastScrollAlwaysVisible="false"
                     android:fastScrollEnabled="true" />
+
             </LinearLayout>
 
         </FrameLayout>

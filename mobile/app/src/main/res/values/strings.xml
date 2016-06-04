@@ -52,4 +52,6 @@
 
     <string name="dialog_selectServer_title">Select a Server</string>
     <string name="dialog_selectServer_hint">Server URL</string>
+
+    <string name="dialog_downloadedFiles_title">Downloaded Files</string>
 </resources>

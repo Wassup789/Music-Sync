@@ -88,11 +88,19 @@ public class MainActivity extends AppCompatActivity {
             hasStartedBackground = true;
         }
 
+        if(getIntent().hasExtra("showDownloaded") && getIntent().getBooleanExtra("showDownloaded", true) && BackgroundService.filesDownloaded.size() > 0) {
+            new MaterialDialog.Builder(this)
+                    .title(R.string.dialog_downloadedFiles_title)
+                    .items(BackgroundService.filesDownloaded)
+                    .show();
+        }
+
         NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.cancel(BackgroundService.notificationID);
         notificationManager.cancel(BackgroundService.notificationIDComplete);
         notificationManager.cancel(BackgroundService.notificationIDPermMissing);
         BackgroundService.totalFilesDownloaded = 0;
+        BackgroundService.filesDownloaded.clear();
     }
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
         switch (requestCode) {
@@ -137,6 +145,9 @@ public class MainActivity extends AppCompatActivity {
                         .content(getString(R.string.dialog_about_desc))
                         .show();
                 return true;
+            /*case R.id.action_debug:
+
+                return true;*/
             default:
                 return super.onOptionsItemSelected(item);
         }
