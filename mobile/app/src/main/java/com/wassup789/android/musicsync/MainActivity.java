@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.ResultReceiver;
 import android.support.v4.app.ActivityCompat;
@@ -21,6 +22,9 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
+import android.text.Html;
+import android.util.Base64;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -28,7 +32,17 @@ import android.widget.TextView;
 
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.astuetz.PagerSlidingTabStrip;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
 import com.wassup789.android.musicsync.fragments.*;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.ConnectException;
+import java.net.URL;
+import java.net.URLConnection;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -87,6 +101,8 @@ public class MainActivity extends AppCompatActivity {
             startService(intent);
             hasStartedBackground = true;
         }
+
+        new CheckVersionAsync().execute();
 
         if(getIntent().hasExtra("showDownloaded") && getIntent().getBooleanExtra("showDownloaded", true) && BackgroundService.filesDownloaded.size() > 0) {
             new MaterialDialog.Builder(this)
@@ -271,6 +287,61 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
             }
+        }
+    }
+
+    public class CheckVersionAsync extends AsyncTask<String, Void, Void> {
+        protected Void doInBackground(String... strings) {
+            if(!checkVersion()){
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        new MaterialDialog.Builder(MainActivity.this)
+                                .title(R.string.dialog_outdatedVersion_title)
+                                .positiveText(getString(R.string.dialog_dismiss))
+                                .content(Html.fromHtml(getString(R.string.dialog_outdatedVersion_desc)))
+                                .show();
+                    }
+                });
+            }
+            return null;
+        }
+
+        protected void onProgressUpdate(Integer... progress) {}
+        protected void onPostExecute(Long result) {}
+    }
+
+    public boolean checkVersion(){
+        try {
+            String serverIp = getSharedPreferences("settings", Context.MODE_PRIVATE).getString("server", SettingsFragment.default_server);
+            if(serverIp.isEmpty())
+                return false;
+
+            URL url = new URL(serverIp + "version");
+            URLConnection urlConnection = url.openConnection();
+            urlConnection.setConnectTimeout(5000);
+            urlConnection.connect();
+
+            BufferedReader in = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
+
+            String inputLine;
+            String data = "";
+            while ((inputLine = in.readLine()) != null)
+                data = inputLine;
+            Gson gson = new GsonBuilder().create();
+
+            String[] thisVersion = BuildConfig.VERSION_NAME.split("\\.");
+            Integer[] version = gson.fromJson(data, Integer[].class);
+            for(int i = 0; i < version.length; i++) {
+                if(version[i] != Integer.parseInt(thisVersion[i]))
+                    return false;
+            }
+            return true;
+        } catch (ConnectException e) {
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
         }
     }
 }

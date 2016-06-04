@@ -65,15 +65,15 @@ namespace MusicSync
         {
             switch (request.Url.LocalPath)
             {
-                case "/playlists.php":
+                case "/playlists":
                     return GetPlaylists();
-                case "/verify.php":
+                case "/verify":
                     return GetVerifyPlaylist(request.QueryString);
-                case "/getfiles.php":
+                case "/getfiles":
                     return GetFiles(request.QueryString);
-                case "/download.php":
+                case "/download":
                     return GetDownload(request.QueryString);
-                case "/version.php":
+                case "/version":
                     Version v = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
                     return "[" + v.Major + "," + v.Minor + "," + v.Build + "," + v.Revision + "]";
             }

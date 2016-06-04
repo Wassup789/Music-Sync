@@ -10,7 +10,7 @@
     <string name="editPlaylists_label">Edit playlists</string>
     <string name="editPlaylists_desc">Edit the playlists list</string>
     <string name="forceRefresh_label">Force Refresh</string>
-    <string name="regeneratePlaylists_label">Regenerate Playlists</string>
+    <string name="regeneratePlaylists_label">Regenerate Playlist File(s)</string>
     <string name="removeOldPlaylistFiles_label">Remove Old Playlist</string>
     <string name="removeOldPlaylistFiles_desc">Remove playlist files that are not in the playlist list</string>
     <string name="removeAllFiles_label">Remove All Files</string>
@@ -54,4 +54,11 @@
     <string name="dialog_selectServer_hint">Server URL</string>
 
     <string name="dialog_downloadedFiles_title">Downloaded Files</string>
+
+    <string name="dialog_outdatedVersion_title">Version Outdated</string>
+    <string name="dialog_outdatedVersion_desc"><![CDATA[
+        The version numbers of the server and the client do not match. Please update both the server and the client to the latest version.<br><br>
+        Continuing to use the outdated application(s) may result in crashes.<br><br>
+        <a href=\'https://github.com/Wassup789/Music-Sync/releases\'>Download via Github.com</a>
+    ]]></string>
 </resources>

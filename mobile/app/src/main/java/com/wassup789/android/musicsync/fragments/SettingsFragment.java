@@ -7,6 +7,7 @@ import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.text.Html;
 import android.text.InputType;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -23,6 +24,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.wassup789.android.musicsync.BackgroundService;
+import com.wassup789.android.musicsync.BuildConfig;
 import com.wassup789.android.musicsync.MainActivity;
 import com.wassup789.android.musicsync.R;
 import com.wassup789.android.musicsync.objectClasses.DoubleListItem;
@@ -35,8 +37,10 @@ import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.ConnectException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 
 public class SettingsFragment extends Fragment {
@@ -237,6 +241,8 @@ public class SettingsFragment extends Fragment {
                         settingsEditor.putString("server", url);
                         settingsEditor.putString("playlists", default_playlists);
                         settingsEditor.commit();
+
+                        new CheckVersionAsync().execute();
                     }
                 })
                 .show();
@@ -259,7 +265,7 @@ public class SettingsFragment extends Fragment {
         if(!serverUrl.endsWith("/"))
             serverUrl += "/";
         try {
-            URL url = new URL(serverUrl + "playlists.php");
+            URL url = new URL(serverUrl + "playlists");
             BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
 
             String inputLine;
@@ -471,5 +477,58 @@ public class SettingsFragment extends Fragment {
                 })
                 .show();
     }
-    
+
+    public class CheckVersionAsync extends AsyncTask<String, Void, Void> {
+        protected Void doInBackground(String... strings) {
+            if(!checkVersion()){
+                getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        new MaterialDialog.Builder(getContext())
+                                .title(R.string.dialog_outdatedVersion_title)
+                                .positiveText(getString(R.string.dialog_dismiss))
+                                .content(Html.fromHtml(getString(R.string.dialog_outdatedVersion_desc)))
+                                .show();
+                    }
+                });
+            }
+            return null;
+        }
+
+        protected void onProgressUpdate(Integer... progress) {}
+        protected void onPostExecute(Long result) {}
+    }
+
+    public boolean checkVersion(){
+        try {
+            String serverIp = getActivity().getSharedPreferences("settings", Context.MODE_PRIVATE).getString("server", SettingsFragment.default_server);
+            if(serverIp.isEmpty())
+                return false;
+
+            URL url = new URL(serverIp + "version");
+            URLConnection urlConnection = url.openConnection();
+            urlConnection.setConnectTimeout(5000);
+            urlConnection.connect();
+
+            BufferedReader in = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
+
+            String inputLine;
+            String data = "";
+            while ((inputLine = in.readLine()) != null)
+                data = inputLine;
+            Gson gson = new GsonBuilder().create();
+
+            String[] thisVersion = BuildConfig.VERSION_NAME.split("\\.");
+            Integer[] version = gson.fromJson(data, Integer[].class);
+            for(int i = 0; i < version.length; i++) {
+                if(version[i] != Integer.parseInt(thisVersion[i]))
+                    return false;
+            }
+            return true;
+        } catch (ConnectException e) {
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }

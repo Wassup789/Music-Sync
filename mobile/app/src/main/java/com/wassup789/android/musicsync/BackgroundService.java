@@ -41,6 +41,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.net.ConnectException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -58,6 +59,7 @@ public class BackgroundService extends Service {
     public static final int notificationID = 0;
     public static final int notificationIDComplete = notificationID + 1;
     public static final int notificationIDPermMissing = notificationID + 2;
+    public static final int notificationIDOutdated = notificationID + 3;
     public static int totalFilesDownloaded = 0;
     public static ArrayList<String> filesDownloaded = new ArrayList<String>();
 
@@ -112,6 +114,21 @@ public class BackgroundService extends Service {
         @Override
         public void run() {
             //removeOldPlaylists();
+            if(!checkVersion()) {
+                NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(BackgroundService.this)
+                        .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.drawable.ic_update_white_48dp))
+                        .setSmallIcon(R.drawable.ic_headset_white_48dp)
+                        .setColor(Color.parseColor("#F57C00"))
+                        .setContentTitle("Outdated Version")
+                        .setContentText("The client or server is out of date, please update " + getString(R.string.app_name) +  " to the latest version")
+                        .setContentIntent(PendingIntent.getActivity(BackgroundService.this, 0, new Intent(BackgroundService.this, MainActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP), 0))
+                        .setAutoCancel(true);
+
+                notificationManager.notify(notificationIDOutdated, mBuilder.build());
+                return;
+            }
+
             try {
                 String[] playlists = new Gson().fromJson(settings.getString("playlists", SettingsFragment.default_playlists), String[].class);
                 for (int i = 0; i < playlists.length; i++) {
@@ -174,10 +191,11 @@ public class BackgroundService extends Service {
 
             NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
             NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this)
-                    .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.drawable.ic_file_download_black_48dp))
+                    .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.drawable.ic_folder_white_48dp))
                     .setSmallIcon(R.drawable.ic_headset_white_48dp)
                     .setColor(Color.parseColor("#F57C00"))
-                    .setContentTitle("Missing permission: storage")
+                    .setContentTitle("Missing Permission")
+                    .setContentText("Could not download files because the permission storage in unavailable")
                     .setContentIntent(PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP), 0))
                     .setAutoCancel(true);
             if(!MainActivity.isActivityActiviated)
@@ -192,7 +210,7 @@ public class BackgroundService extends Service {
         sendMessage(100, "Gathering Information");
         sendMessage(103, playlistName);
         try {
-            URL verifyUrl = new URL(serverUrl + "verify.php?q=" + Base64.encodeToString(playlistName.getBytes(), Base64.DEFAULT));
+            URL verifyUrl = new URL(serverUrl + "verify?q=" + Base64.encodeToString(playlistName.getBytes(), Base64.DEFAULT));
             URLConnection urlConnection = verifyUrl.openConnection();
             urlConnection.setConnectTimeout(5000);
             urlConnection.connect();
@@ -210,7 +228,7 @@ public class BackgroundService extends Service {
                 return;
             }
 
-            URL getFilesUrl = new URL(serverUrl + "getfiles.php?q=" + Base64.encodeToString(playlistName.getBytes(), Base64.DEFAULT));
+            URL getFilesUrl = new URL(serverUrl + "getfiles?q=" + Base64.encodeToString(playlistName.getBytes(), Base64.DEFAULT));
             urlConnection = getFilesUrl.openConnection();
             urlConnection.setConnectTimeout(5000);
             urlConnection.connect();
@@ -293,7 +311,7 @@ public class BackgroundService extends Service {
 
                     Log.i("BackgroundService", String.format("Downloading: \"%s\"", output.get(i).name));
 
-                    URL downloadUrl = new URL(serverUrl + "download.php?q=" + output.get(i).name_b64);
+                    URL downloadUrl = new URL(serverUrl + "download?q=" + output.get(i).name_b64);
                     URLConnection connection = downloadUrl.openConnection();
                     connection.setConnectTimeout(5000);
                     connection.connect();
@@ -314,7 +332,7 @@ public class BackgroundService extends Service {
                     filesDownloaded.add(output.get(i).name);
                 } catch (FileNotFoundException e) {
                     Log.w("BackgroundService", String.format("File: \"%s\" failed to download", output.get(i).name));
-                    Log.w("BackgroundService", String.format("URL: %sdownload.php?q=%s", serverUrl, output.get(i).name_b64));
+                    Log.w("BackgroundService", String.format("URL: %sdownload?q=%s", serverUrl, output.get(i).name_b64));
                     failedDownloads++;
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -425,5 +443,38 @@ public class BackgroundService extends Service {
         bundle.putString("data", value);
         if(resultReceiver != null)
             resultReceiver.send(resultCode, bundle);
+    }
+
+    public boolean checkVersion(){
+        try {
+            String serverIp = getSharedPreferences("settings", Context.MODE_PRIVATE).getString("server", SettingsFragment.default_server);
+            if(serverIp.isEmpty())
+                return false;
+
+            URL url = new URL(serverIp + "version");
+            URLConnection urlConnection = url.openConnection();
+            urlConnection.setConnectTimeout(5000);
+            urlConnection.connect();
+
+            BufferedReader in = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
+
+            String inputLine;
+            String data = "";
+            while ((inputLine = in.readLine()) != null)
+                data = inputLine;
+            Gson gson = new GsonBuilder().create();
+
+            String[] thisVersion = BuildConfig.VERSION_NAME.split("\\.");
+            Integer[] version = gson.fromJson(data, Integer[].class);
+            for(int i = 0; i < version.length; i++) {
+                if(version[i] != Integer.parseInt(thisVersion[i]))
+                    return false;
+            }
+            return true;
+        } catch (ConnectException e) {
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 }
