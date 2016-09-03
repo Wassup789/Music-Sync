@@ -1,0 +1,151 @@
+html, body {
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+}
+body {
+    background-color: #E6E6E6;
+}
+
+* {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+#mainContainer {
+    padding-bottom: 85px;
+}
+
+paper-toolbar #topBar .title {
+    margin-left: 16px;
+    overflow: visible;
+}
+
+#status {
+    padding: 0 0 10px;
+}
+#port-container {
+    margin-top: -5px;
+}
+
+span[data-status]:after {font-weight: bold;}
+span[data-status="unknown"]:after {content: "Unknown";color: #6b6b6b;}
+span[data-status="online"]:after {content: "Online";color: #3bb300;}
+span[data-status="offline"]:after {content: "Offline";color: #cc0707;}
+
+::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+    border-radius: 5px;
+    background: rgba(0,0,0,0.4);
+}
+
+#launch_screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: #FFFFFF;
+    z-index: 10000;
+    transition: opacity 0.4s;
+}
+#launch_screen-header {
+    height: 56px;
+    background: #ff9800;
+}
+#launch_screen-logo {
+    position: absolute;
+    height: 128px;
+    width: 128px;
+    top: calc(50% + 56px - 64px);
+    left: calc(50% - 64px);
+    background: url("../icon.ico");
+    background-size: 128px;
+    animation: shakeAnimation 4s linear infinite;
+    z-index: 1;
+}
+@keyframes shakeAnimation {
+    0% {transform:   rotate( 0deg);}
+    25% {transform:  rotate( 0deg);}
+    30% {transform:  rotate( 5deg);}
+    35% {transform:  rotate(-5deg);}
+    40% {transform:  rotate( 5deg);}
+    45% {transform:  rotate(-5deg);}
+    50% {transform:  rotate( 5deg);}
+    55% {transform:  rotate(-5deg);}
+    60% {transform:  rotate( 5deg);}
+    65% {transform:  rotate(-5deg);}
+    70% {transform:  rotate( 5deg);}
+    75% {transform:  rotate( 0deg);}
+    100% {transform: rotate( 0deg);}
+}
+#launch_screen-ripple {
+    position: absolute;
+    top: calc(50% + 56px);
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: rgba(255, 152, 0, 0.3);
+    animation: rippleAnimation 1.5s linear infinite;
+}
+@keyframes rippleAnimation {
+    0% {
+        width: 50px;
+        height: 50px;
+        opacity: 0;
+    }
+    25% {
+        opacity: 1;
+    }
+    50% {
+        width: 200px;
+        height: 200px;
+    }
+    100% {
+        width: 350px;
+        height: 350px;
+        opacity: 0;
+    }
+}
+
+#paper-datatable-header {
+    position: absolute;
+    display: flex;
+    top: 0;
+    left: 0;
+    width: calc(100% - 12px - 24px);
+    height: 56px;
+    background-color: #fff2df;
+    color: #ff9800;
+    align-items: center;
+    padding: 0 12px 0 24px;
+    display: none;
+}
+
+#selected-text {
+    flex-grow: 1;
+    font-size: 16px;
+}
+td span {
+    white-space: nowrap;
+}
+.card-content * {
+    white-space: nowrap;
+}
+paper-datatable input {
+    font-size: 13px!important;
+}
+#playlist-add-select {
+    margin-top: 15px;
+}

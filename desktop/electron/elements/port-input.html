@@ -1,0 +1,65 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-input/iron-input.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="port-validator.html">
+<dom-module id="port-input">
+    <template>
+
+        <style>
+            :host {
+                display: inline-block;
+            }
+
+            :host([hidden]) {
+                display: none !important;
+            }
+
+            .container {
+                @apply(--layout-horizontal);
+            }
+        </style>
+
+        <port-validator></port-validator>
+
+        <div class="container">
+
+            <input is="iron-input" maxlength="5" bind-value="{{_input}}" size="5" aria-label="A valid port">
+
+        </div>
+
+    </template>
+</dom-module>
+
+<script>
+    Polymer({
+        is: "port-input",
+
+        behaviors: [
+            Polymer.IronValidatableBehavior
+        ],
+
+        properties: {
+            value: {
+                notify: true,
+                type: String
+            },
+
+            _input: {
+                type: String
+            },
+
+            validator: {
+                type: String,
+                value: "port-validator"
+            }
+        },
+
+        observers: [
+            "_computeValue(_input)"
+        ],
+
+        _computeValue: function(input) {
+            this.value = input.trim();
+        }
+    });
+</script>

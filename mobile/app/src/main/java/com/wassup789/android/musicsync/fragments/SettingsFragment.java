@@ -480,7 +480,7 @@ public class SettingsFragment extends Fragment {
 
     public class CheckVersionAsync extends AsyncTask<String, Void, Void> {
         protected Void doInBackground(String... strings) {
-            if(!checkVersion()){
+            if(!BackgroundService.checkVersion(getContext())){
                 getActivity().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -497,38 +497,5 @@ public class SettingsFragment extends Fragment {
 
         protected void onProgressUpdate(Integer... progress) {}
         protected void onPostExecute(Long result) {}
-    }
-
-    public boolean checkVersion(){
-        try {
-            String serverIp = getActivity().getSharedPreferences("settings", Context.MODE_PRIVATE).getString("server", SettingsFragment.default_server);
-            if(serverIp.isEmpty())
-                return false;
-
-            URL url = new URL(serverIp + "version");
-            URLConnection urlConnection = url.openConnection();
-            urlConnection.setConnectTimeout(5000);
-            urlConnection.connect();
-
-            BufferedReader in = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
-
-            String inputLine;
-            String data = "";
-            while ((inputLine = in.readLine()) != null)
-                data = inputLine;
-            Gson gson = new GsonBuilder().create();
-
-            String[] thisVersion = BuildConfig.VERSION_NAME.split("\\.");
-            Integer[] version = gson.fromJson(data, Integer[].class);
-            for(int i = 0; i < version.length; i++) {
-                if(version[i] != Integer.parseInt(thisVersion[i]))
-                    return false;
-            }
-            return true;
-        } catch (ConnectException e) {
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
     }
 }

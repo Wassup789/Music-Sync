@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Music Sync</title>
+
+    <script src="bower_components/webcomponentsjs/webcomponents-lite.min.js"></script>
+
+    <link rel="import" href="bower_components/paper-header-panel/paper-header-panel.html">
+    <link rel="import" href="bower_components/paper-toolbar/paper-toolbar.html">
+    <link rel="import" href="bower_components/paper-card/paper-card.html">
+    <link rel="import" href="bower_components/paper-button/paper-button.html">
+    <link rel="import" href="bower_components/paper-fab/paper-fab.html">
+    <link rel="import" href="bower_components/iron-icons/iron-icons.html">
+    <link rel="import" href="bower_components/paper-dialog/paper-dialog.html">
+    <link rel="import" href="bower_components/paper-input/paper-input.html">
+    <link rel="import" href="bower_components/paper-toast/paper-toast.html">
+    <link rel="import" href="bower_components/paper-icon-button/paper-icon-button.html">
+    <link rel="import" href="bower_components/paper-datatable/paper-datatable.html">
+    <link rel="import" href="elements/port-input.html">
+
+    <link rel="stylesheet" type="text/css" href="css/main.css" />
+    <script type="text/javascript" src="js/main.js"></script>
+</head>
+<body>
+    <div id="launch_screen">
+        <div id="launch_screen-header"></div>
+        <div id="launch_screen-logo"></div>
+        <div id="launch_screen-ripple"></div>
+    </div>
+    <dom-module id="main-element">
+        <template>
+            <style>
+                :host {
+                    --primary-color: var(--paper-orange-500);
+                    --light-primary-color: var(--paper-orange-100);
+                    --dark-primary-color: var(--paper-orange-700);
+                }
+                paper-card {
+                    margin: 20px 20px 0;
+                    width: calc(100% - 40px);
+                    --paper-card-header: {
+                        font-size: 20px;
+                        background-color: #F8F8F8;
+                        border-bottom: 1px solid #E0E0E0;
+                    }
+                    --paper-card-header-text: {
+                        font-size: 20px;
+                    }
+                }
+                paper-fab {
+                    position: fixed;
+                    right: 20px;
+                    bottom: 20px;
+                    z-index: 1;
+                    --paper-fab-background: var(--paper-blue-500);
+                }
+                paper-dialog {
+                    width: 65%;
+                }
+                paper-dialog > * {
+                    margin-top: 5px;
+                }
+                paper-dialog > paper-button {
+                    margin-left: 25px;
+                    padding: 0.7em 0.57em;
+                }
+                paper-dialog .header {
+                    background-color: #F8F8F8;
+                    border-bottom: 1px solid #E0E0E0;
+                    padding: 24px;
+                    font-size: 20px;
+                    margin-top: 0;
+                }
+                paper-dialog .buttons {
+                    margin-top: 20px;
+                    border-top: 1px solid #E0E0E0;
+                }
+
+                paper-button {
+                    transition: all 0.2s;
+                }
+                paper-button:not([disabled]) {
+                    background: var(--paper-orange-500);
+                    color: #FFFFFF;
+                }
+            </style>
+            <paper-header-panel>
+                <paper-toast text=""></paper-toast>
+                <paper-toolbar id="toolbar">
+                    <span class="title">Settings</span>
+                </paper-toolbar>
+                <div id="content">
+                    <paper-card heading="General">
+                        <div class="card-content">
+                            <div id="status" class="card-row">
+                                <span>Server status: </span>
+                                <span data-status="unknown"></span>
+                            </div>
+                            <div class="card-row">
+                                <span>Server:</span>
+                                <paper-button id="button-start" raised disabled>Start</paper-button>
+                                <paper-button id="button-stop" raised disabled>Stop</paper-button>
+                                <paper-button id="button-restart" raised disabled>Restart</paper-button>
+                            </div>
+                            <div id="port-container" class="card-row">
+                                <paper-input-container auto-validate attr-for-value="value">
+                                    <label>Server port</label>
+                                    <port-input class="paper-input-input"></port-input>
+                                    <paper-input-error>Invalid port</paper-input-error>
+                                </paper-input-container>
+                            </div>
+                        </div>
+                    </paper-card>
+                    <paper-card heading="Playlists">
+                        <div id="paper-datatable-header">
+                            <div id="selected-text">
+                                <span>1</span> item(s) selected
+                            </div>
+                            <paper-icon-button icon="delete"></paper-icon-button>
+                        </div>
+                        <paper-datatable selectable multi-selection>
+                            <paper-datatable-column header="Name" property="name" type="String" editable dialog edit-icon></paper-datatable-column>
+                            <paper-datatable-column header="Directory" property="directory" type="String" editable dialog edit-icon></paper-datatable-column>
+                        </paper-datatable>
+                    </paper-card>
+                    <paper-dialog id="playlist-add-dialog" modal>
+                        <div class="header">Add Playlist</div>
+                        <paper-input id="playlist-add-name" label="Name"></paper-input>
+                        <paper-input id="playlist-add-directory" label="Directory" readonly></paper-input>
+                        <paper-button id="playlist-add-select" raised>Select a Directory</paper-button>
+                        <div class="buttons">
+                            <paper-button id="playlist-add-button">Add</paper-button>
+                        </div>
+                    </paper-dialog>
+                    <paper-fab icon="add" title="Add" onclick="document.querySelector('#playlist-add-dialog').open()"></paper-fab>
+                </div>
+            </paper-header-panel>
+        </template>
+        <script>
+            HTMLImports.whenReady(function () {
+                Polymer({
+                    is: 'main-element'
+                });
+            });
+        </script>
+    </dom-module>
+    <main-element></main-element>
+</body>
+</html>

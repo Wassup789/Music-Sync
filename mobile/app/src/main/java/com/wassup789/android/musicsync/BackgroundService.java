@@ -43,6 +43,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.ConnectException;
 import java.net.MalformedURLException;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
@@ -114,8 +115,8 @@ public class BackgroundService extends Service {
         @Override
         public void run() {
             //removeOldPlaylists();
-            if(!checkVersion()) {
-                NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            if(!checkVersion(BackgroundService.this)) {
                 NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(BackgroundService.this)
                         .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.drawable.ic_update_white_48dp))
                         .setSmallIcon(R.drawable.ic_headset_white_48dp)
@@ -127,7 +128,8 @@ public class BackgroundService extends Service {
 
                 notificationManager.notify(notificationIDOutdated, mBuilder.build());
                 return;
-            }
+            }else
+                notificationManager.cancel(notificationIDOutdated);
 
             try {
                 String[] playlists = new Gson().fromJson(settings.getString("playlists", SettingsFragment.default_playlists), String[].class);
@@ -305,7 +307,7 @@ public class BackgroundService extends Service {
                             )
                             .setProgress(output.size() - failedDownloads, i - failedDownloads, false)
                             .setOngoing(true)
-                            .setContentIntent(PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP).putExtra("showDownloaded", true), 0));
+                            .setContentIntent(PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK).putExtra("showDownloaded", true), 0));
                     if(!MainActivity.isActivityActiviated)
                         notificationManager.notify(notificationID, mBuilder.build());
 
@@ -354,7 +356,7 @@ public class BackgroundService extends Service {
                                     .bigText(String.format("%d files downloaded%s", (totalFilesDownloaded + output.size() - failedDownloads), failedDownloadString))
                     )
                     .setDeleteIntent(createOnDismissedIntent(this, notificationIDComplete))
-                    .setContentIntent(PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP).putExtra("showDownloaded", true), 0))
+                    .setContentIntent(PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK).putExtra("showDownloaded", true), 0))
                     .setAutoCancel(true);
 
             totalFilesDownloaded += output.size();
@@ -445,9 +447,9 @@ public class BackgroundService extends Service {
             resultReceiver.send(resultCode, bundle);
     }
 
-    public boolean checkVersion(){
+    public static boolean checkVersion(Context context){
         try {
-            String serverIp = getSharedPreferences("settings", Context.MODE_PRIVATE).getString("server", SettingsFragment.default_server);
+            String serverIp = context.getSharedPreferences("settings", Context.MODE_PRIVATE).getString("server", SettingsFragment.default_server);
             if(serverIp.isEmpty())
                 return false;
 
@@ -472,6 +474,8 @@ public class BackgroundService extends Service {
             }
             return true;
         } catch (ConnectException e) {
+            return true;
+        } catch (SocketTimeoutException e) {
             return true;
         } catch (Exception e) {
             return false;
