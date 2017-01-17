@@ -21,10 +21,6 @@ if(localStorage.getItem("settings") == null)
             })
     );
 
-localStorage.setItem("playlists", JSON.stringify([
-    {id: 0, name: "default", directory: "C:\\Users\\Wassup789\\Desktop\\Main Music"}
-]));
-
 let mainWindow;
 let tray;
 let currentWindowSender;
@@ -40,7 +36,7 @@ function createMainWindow() {
 
     mainWindow.loadURL(`file://${__dirname}/index.html`);
 
-    mainWindow.webContents.openDevTools();
+    //mainWindow.webContents.openDevTools();
     mainWindow.setMenu(null);
 
     tray = new Tray(`${__dirname}/icon.ico`);
@@ -222,6 +218,9 @@ server.get("/playlists", function(req, res) {
 
 server.get("/getfiles", function(req, res) {
     var q = Buffer.from(req.query.q, "base64").toString();
+    if(q == "")
+        return;
+
     var playlists = JSON.parse(localStorage.getItem("playlists"));
     var selectedPlaylist = false;
 
@@ -237,11 +236,12 @@ server.get("/getfiles", function(req, res) {
     var filesList = fs.readdirSync(selectedPlaylist.directory),
         output = [];
 
+    var i = 0;
     filesList.forEach(function(file) {
         var parsedFile = fs.statSync(selectedPlaylist.directory + file);
         if(!parsedFile.isDirectory() && file != ".gitignore") {
             output.push({
-                name: selectedPlaylist.name + "/" + file,
+                name: file,
                 name_b64: Buffer.from(selectedPlaylist.name + "/" + file).toString("base64"),
                 size: parsedFile["size"]
             });
@@ -310,4 +310,4 @@ process.on("uncaughtException", function(err) {
             content: "Is the port currently in use?"
         });
     }
-});   
+});

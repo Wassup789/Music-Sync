@@ -285,7 +285,6 @@ public class BackgroundService extends Service {
             notificationManager.cancel(notificationIDComplete);
             notificationManager.cancel(notificationIDPermMissing);
 
-
             Log.i("BackgroundService", String.format("Start download of %d file(s)", output.size()));
             sendMessage(100, String.format("Downloading %d file(s)", output.size()));
 
