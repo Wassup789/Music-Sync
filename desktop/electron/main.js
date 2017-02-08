@@ -32,7 +32,7 @@ function createMainWindow() {
             haveStartupFlag = true
     });
 
-    mainWindow = new BrowserWindow({width: 550, height: 600, icon: `${__dirname}/icon.ico`, show: !haveStartupFlag});
+    mainWindow = new BrowserWindow({width: 550, height: 600, minWidth: 410, minHeight: 490, icon: `${__dirname}/icon.ico`, show: !haveStartupFlag});
 
     mainWindow.loadURL(`file://${__dirname}/index.html`);
 
@@ -164,6 +164,7 @@ app.on("activate", function () {
 // Start of server
 const express = require("express");
 const server = express();
+server.disable("x-powered-by");
 var runningServer;
 
 var serverData = {
@@ -189,9 +190,8 @@ function restartServer(port) {
     sendDataToWindow("serverDataResponse", serverData);
 }
 
-
 server.get("/version", function(req, res) {
-    res.send(JSON.stringify(version));
+    res.json(version);
 });
 
 server.get("/playlists", function(req, res) {
@@ -213,13 +213,14 @@ server.get("/playlists", function(req, res) {
         });
     }
 
-    res.send(JSON.stringify(output));
+    res.json(output);
 });
 
 server.get("/getfiles", function(req, res) {
+    if(typeof req.query.q === "undefined")
+
     var q = Buffer.from(req.query.q, "base64").toString();
     if(q == "")
-        return;
 
     var playlists = JSON.parse(localStorage.getItem("playlists"));
     var selectedPlaylist = false;
@@ -229,7 +230,6 @@ server.get("/getfiles", function(req, res) {
             selectedPlaylist = playlists[i];
     }
     if(!selectedPlaylist)
-        return res.send("Invalid query");
 
     selectedPlaylist.directory += !selectedPlaylist.directory.endsWith("\\") ? "\\" : "";
 
@@ -243,18 +243,25 @@ server.get("/getfiles", function(req, res) {
             output.push({
                 name: file,
                 name_b64: Buffer.from(selectedPlaylist.name + "/" + file).toString("base64"),
-                size: parsedFile["size"]
+                size: parsedFile.size,
+                dateCreated: parsedFile.birthtime.getTime(),
+                dateModified: parsedFile.mtime.getTime()
             });
         }
     });
 
-    res.send(JSON.stringify(output));
+    output.sort(function(a, b) {
+        return a.dateCreated - b.dateCreated;
+    });
+
+    res.json(output);
 });
 
 server.get("/download", function(req, res) {
+    if(typeof req.query.q === "undefined")
+
     var q = Buffer.from(req.query.q, "base64").toString().split("/");
     if(q.length < 2)
-        return res.send("Invalid query");
 
     var playlists = JSON.parse(localStorage.getItem("playlists"));
     var selectedPlaylist = false;
@@ -264,16 +271,13 @@ server.get("/download", function(req, res) {
             selectedPlaylist = playlists[i];
     }
     if(!selectedPlaylist)
-        return res.send("Invalid query");
 
     selectedPlaylist.directory += !selectedPlaylist.directory.endsWith("\\") ? "\\" : "";
 
     if(!fs.existsSync(selectedPlaylist.directory + q[1]))
-        return res.send("File not found");
 
     var file = fs.statSync(selectedPlaylist.directory + q[1]);
     if(file.isDirectory())
-        return res.send("Invalid file");
 
     res.sendFile(selectedPlaylist.directory + q[1]);
 });
@@ -288,8 +292,8 @@ server.get("/verify", function(req, res) {
             selectedPlaylist = playlists[i];
     }
     if(!selectedPlaylist)
-        return res.send("[false]");
-    res.send("[true]");
+        return res.json([false]);
+    res.json([true]);
 });
 
 server.get("/*", function(req, res) {
@@ -311,3 +315,16 @@ process.on("uncaughtException", function(err) {
         });
     }
 });
+
+var Error = function (type, message){
+    this.type = type;
+    this.message = message;
+};
+    return {
+        status: "error",
+        error: {
+            type: this.type,
+            message: this.message
+        }
+    };
+};

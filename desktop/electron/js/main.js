@@ -1,14 +1,16 @@
 var ipc = require("electron").ipcRenderer;
 ipc.send("me");
 
-var $Poly;
+var $,
+    $Poly;
 window.addEventListener("WebComponentsReady", function(){
     var isPlaylistDataInit = false, isSettingsDataInit = false;
+    $ = function(a){return document.querySelector(a);};
     $Poly = Polymer.dom;
 
     ipc.send("playlistData");
     ipc.on("playlistDataResponse", function(response, data){
-        document.querySelector("paper-datatable").data = data;
+        $("paper-datatable").data = data;
 
         isPlaylistDataInit = true;
         if(isPlaylistDataInit && isSettingsDataInit)
@@ -17,8 +19,8 @@ window.addEventListener("WebComponentsReady", function(){
 
     ipc.send("settingsData");
     ipc.on("settingsDataResponse", function(response, data){
-        document.querySelector("port-input").value = data.port.toString();
-        document.querySelector("port-input input").value = data.port.toString();
+        $("port-input").value = data.port.toString();
+        $("port-input input").value = data.port.toString();
 
         isSettingsDataInit = true;
         if(isPlaylistDataInit && isSettingsDataInit)
@@ -28,15 +30,15 @@ window.addEventListener("WebComponentsReady", function(){
     ipc.send("server-data");
     ipc.on("serverDataResponse", function(response, data){
         if(data.isRunning) {
-            document.querySelector("span[data-status]").setAttribute("data-status", "online");
-            document.querySelector("#button-start").disabled = true;
-            document.querySelector("#button-stop").disabled = false;
+            $("span[data-status]").setAttribute("data-status", "online");
+            $("#button-start").disabled = true;
+            $("#button-stop").disabled = false;
         }else{
-            document.querySelector("span[data-status]").setAttribute("data-status", "offline");
-            document.querySelector("#button-start").disabled = false;
-            document.querySelector("#button-stop").disabled = true;
+            $("span[data-status]").setAttribute("data-status", "offline");
+            $("#button-start").disabled = false;
+            $("#button-stop").disabled = true;
         }
-        document.querySelector("#button-restart").disabled = false;
+        $("#button-restart").disabled = false;
 
     });
 
@@ -47,48 +49,48 @@ window.addEventListener("WebComponentsReady", function(){
 
 function registerListeners() {
     setTimeout(function() {
-        document.querySelector("#launch_screen").style.opacity = 0;
+        $("#launch_screen").style.opacity = 0;
         setTimeout(function () {
-            document.querySelector("#launch_screen").style.display = "none";
+            $("#launch_screen").style.display = "none";
         }, 400);
     }, 500);
 
     var isDirectoryDialogOpen = false;
-    document.querySelector("#playlist-add-select").addEventListener("click", function(){
+    $("#playlist-add-select").addEventListener("click", function(){
         if(isDirectoryDialogOpen)
             return;
 
         isDirectoryDialogOpen = true;
         ipc.send("open-directory-dialog");
     });
-    document.querySelector("#playlist-add-directory").addEventListener("click", function(){
+    $("#playlist-add-directory").addEventListener("click", function(){
         if(isDirectoryDialogOpen)
             return;
 
         isDirectoryDialogOpen = true;
         ipc.send("open-directory-dialog");
     });
-    document.querySelector("#playlist-add-button").addEventListener("click", function(){
-        var name = document.querySelector("#playlist-add-name").value,
-            directory = document.querySelector("#playlist-add-directory").value;
+    $("#playlist-add-button").addEventListener("click", function(){
+        var name = $("#playlist-add-name").value,
+            directory = $("#playlist-add-directory").value;
 
         if(name == "" || directory == "") {
             if(name == "") {
-                document.querySelector("#playlist-add-name").invalid = true;
-                document.querySelector("#playlist-add-name").errorMessage = "Name cannot be empty"
+                $("#playlist-add-name").invalid = true;
+                $("#playlist-add-name").errorMessage = "Name cannot be empty"
             }else
-                document.querySelector("#playlist-add-name").invalid = false;
+                $("#playlist-add-name").invalid = false;
 
             if(directory == "") {
-                document.querySelector("#playlist-add-directory").invalid = true;
-                document.querySelector("#playlist-add-directory").errorMessage = "Directory cannot be empty"
+                $("#playlist-add-directory").invalid = true;
+                $("#playlist-add-directory").errorMessage = "Directory cannot be empty"
             }else
-                document.querySelector("#playlist-add-directory").invalid = false;
+                $("#playlist-add-directory").invalid = false;
 
             return;
         }
-        document.querySelector("#playlist-add-name").invalid = false;
-        document.querySelector("#playlist-add-directory").invalid = false;
+        $("#playlist-add-name").invalid = false;
+        $("#playlist-add-directory").invalid = false;
 
         var inputs = document.querySelectorAll("#playlist-add-dialog paper-input");
         for(let i = 0; i < inputs.length; i++)
@@ -100,31 +102,31 @@ function registerListeners() {
         };
         ipc.send("add-playlist", data);
 
-        document.querySelector("#playlist-add-dialog").close();
+        $("#playlist-add-dialog").close();
     });
     var datatablePosition = 0;
-    document.querySelector("paper-datatable").addEventListener("data-changed", function(){
+    $("paper-datatable").addEventListener("data-changed", function(){
         var myNumber = ++datatablePosition;
         setTimeout(function(){
             if(datatablePosition == myNumber){
-                ipc.send("change-playlist", document.querySelector("paper-datatable").data);
+                ipc.send("change-playlist", $("paper-datatable").data);
                 createSnackbar("Saved");
             }
 
         }, 1000);
     });
-    document.querySelector("paper-datatable").addEventListener("selection-changed", function(){
+    $("paper-datatable").addEventListener("selection-changed", function(){
         if(this.selectedItems.length > 0) {
-            document.querySelector("#paper-datatable-header").style.display = "flex";
-            document.querySelector("#selected-text span").innerHTML = this.selectedItems.length;
+            $("#paper-datatable-header").style.display = "flex";
+            $("#selected-text span").innerHTML = this.selectedItems.length;
         }else{
-            document.querySelector("#paper-datatable-header").style.display = "none";
+            $("#paper-datatable-header").style.display = "none";
         }
     });
-    document.querySelector("#paper-datatable-header paper-icon-button").addEventListener("click", function(){
-        var selectedData = document.querySelector("paper-datatable").selectedItems;
+    $("#paper-datatable-header paper-icon-button").addEventListener("click", function(){
+        var selectedData = $("paper-datatable").selectedItems;
         if(selectedData.length > 0) {
-            var data = document.querySelector("paper-datatable").data;
+            var data = $("paper-datatable").data;
             for(let i = 0; i < selectedData.length; i++) {
                 for(let j = 0; j < data.length; j++) {
                     if(selectedData[i].name == data[j].name) {
@@ -132,19 +134,19 @@ function registerListeners() {
                     }
                 }
             }
-            document.querySelector("paper-datatable").deselectAll();
-            document.querySelector("paper-datatable").reload();
-            document.querySelector("paper-datatable").dispatchEvent(new CustomEvent("data-changed"));
+            $("paper-datatable").deselectAll();
+            $("paper-datatable").reload();
+            $("paper-datatable").dispatchEvent(new CustomEvent("data-changed"));
         }
     });
     window.addEventListener("click", function(e){
         if(e.target.tagName.toLowerCase() == "iron-overlay-backdrop")
-            document.querySelector("paper-dialog").close();
+            $("paper-dialog").close();
     });
 
     ipc.on("directory-selected", function (event, path) {
         isDirectoryDialogOpen = false;
-        document.querySelector("#playlist-add-directory").value = path[0];
+        $("#playlist-add-directory").value = path[0];
     });
     ipc.on("no-directory-selected", function (event, path) {
         isDirectoryDialogOpen = false;
@@ -152,12 +154,12 @@ function registerListeners() {
 
     //Start of server port input
     var portPosition = 0;
-    document.querySelector("port-input").addEventListener("input", function() {
+    $("port-input").addEventListener("input", function() {
         if(!this.invalid) {
             var myNumber = ++portPosition;
             setTimeout(function(){
                 if(portPosition == myNumber){
-                    ipc.send("change-port", parseInt(document.querySelector("port-input").value));
+                    ipc.send("change-port", parseInt($("port-input").value));
                     createSnackbar("Saved");
                 }
 
@@ -166,19 +168,19 @@ function registerListeners() {
     });
 
     //Start of server buttons
-    document.querySelector("#button-start").addEventListener("click", function() {
+    $("#button-start").addEventListener("click", function() {
         if(this.disabled)
             return;
 
         ipc.send("server-start");
     });
-    document.querySelector("#button-stop").addEventListener("click", function() {
+    $("#button-stop").addEventListener("click", function() {
         if(this.disabled)
             return;
 
         ipc.send("server-stop");
     });
-    document.querySelector("#button-restart").addEventListener("click", function() {
+    $("#button-restart").addEventListener("click", function() {
         if(this.disabled)
             return;
 
@@ -187,8 +189,8 @@ function registerListeners() {
 }
 
 function createSnackbar(text){
-    document.querySelector("paper-toast").opened = false;
-    document.querySelector("paper-toast").show({
+    $("paper-toast").opened = false;
+    $("paper-toast").show({
         text: text
     });
 }
