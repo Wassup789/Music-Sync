@@ -16,7 +16,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.IBinder;
 import android.os.ResultReceiver;
-import android.service.notification.StatusBarNotification;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Base64;
@@ -53,7 +52,6 @@ import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -209,7 +207,7 @@ public class BackgroundService extends Service {
                     .setContentText("Could not download files because the permission storage in unavailable")
                     .setContentIntent(PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP), 0))
                     .setAutoCancel(true);
-            if(!MainActivity.isActivityActiviated)
+            if(!MainActivity.isActivityActivated)
                 notificationManager.notify(notificationIDPermMissing, mBuilder.build());
             return;
         }
@@ -403,7 +401,7 @@ public class BackgroundService extends Service {
                     .setAutoCancel(true);
 
             totalFilesDownloaded += dataFiles.size();
-            if(!MainActivity.isActivityActiviated)
+            if(!MainActivity.isActivityActivated)
                 notificationManager.notify(notificationIDComplete, mBuilder.build());
 
             sendMessage(STATUS_UPDATE, "Updating Playlist");

@@ -1,6 +1,5 @@
 package com.wassup789.android.musicsync.objectClasses;
 
-import android.graphics.Color;
 import android.widget.Switch;
 
 public class DoubleListItem{

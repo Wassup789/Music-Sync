@@ -2,29 +2,23 @@ package com.wassup789.android.musicsync;
 
 import android.Manifest;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.os.AsyncTask;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.ResultReceiver;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
-import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.text.Html;
-import android.util.Base64;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -32,18 +26,9 @@ import android.widget.TextView;
 
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.astuetz.PagerSlidingTabStrip;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonSyntaxException;
-import com.wassup789.android.musicsync.fragments.*;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.ConnectException;
-import java.net.SocketTimeoutException;
-import java.net.URL;
-import java.net.URLConnection;
+import com.wassup789.android.musicsync.fragments.FilesFragment;
+import com.wassup789.android.musicsync.fragments.SettingsFragment;
+import com.wassup789.android.musicsync.fragments.StatusFragment;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -51,18 +36,18 @@ public class MainActivity extends AppCompatActivity {
     ViewPager pager;
     public static MyResultReceiver resultReceiver;
     public static Boolean hasStartedBackground = false;
-    public static boolean isActivityActiviated = false;
+    public static boolean isActivityActivated = false;
 
     @Override
     public void onStart() {
         super.onStart();
-        isActivityActiviated = true;
+        isActivityActivated = true;
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        isActivityActiviated = false;
+        isActivityActivated = false;
     }
 
     @Override

@@ -16,11 +16,11 @@ This code is licensed under the MIT License.
 
 This project requires the installation of:
 
- - Windows with [.NET Framework v4.5+](https://www.microsoft.com/en-us/download/details.aspx?id=42642)
+ - A computer to run the server
  - An Android device
 
 ## Downloads
-**Latest Version:** ***[v1.0.0.1][Dld_Latest]***
+**Latest Version:** ***[v1.0.2.0][Dld_Latest]***
 
 **Release Archive:**
 
