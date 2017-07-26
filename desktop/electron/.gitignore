@@ -1,5 +1,7 @@
 dist
 settings
+installer/setup.exe
+installer/setup-x64.exe
 
 ### Bower ###
 bower_components

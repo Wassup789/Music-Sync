@@ -109,8 +109,22 @@ function registerListeners() {
         var myNumber = ++datatablePosition;
         setTimeout(function(){
             if(datatablePosition == myNumber){
-                ipc.send("change-playlist", $("paper-datatable").data);
-                createSnackbar("Saved");
+                let data = $("paper-datatable").data,
+                    canSave = true;
+                for(let i = 0; i < data.length; i++) {
+                    for(let j = 0; j < data.length; j++) {
+                        if(i !== j && data[i].name === data[j].name) {
+                            canSave = false;
+                        }
+                    }
+                }
+
+                if(canSave) {
+                    ipc.send("change-playlist", $("paper-datatable").data);
+                    createSnackbar("Saved");
+                }else{
+                    createSnackbar("Error: Duplicate playlist name");
+                }
             }
 
         }, 1000);

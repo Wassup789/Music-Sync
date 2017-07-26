@@ -1,4 +1,4 @@
-const version = [1, 0, 1, 0];
+const version = [1, 0, 2, 0];
 
 const electron = require("electron");
 const app = electron.app;
@@ -6,29 +6,59 @@ const BrowserWindow = electron.BrowserWindow;
 const path = require("path");
 const fs = require("fs");
 const LocalStorage = require("node-localstorage").LocalStorage;
-const localStorage = new LocalStorage("./settings");
+const directoryLocation = __dirname.endsWith("app.asar") ? __dirname.replace("resources\\app.asar", "") : __dirname;
+const localStorage = new LocalStorage(`${directoryLocation}/settings/`);
 const ipc = electron.ipcMain;
 const dialog = electron.dialog;
 const Menu = electron.Menu;
 const Tray = electron.Tray;
 
-if(localStorage.getItem("playlists") == null)
+if(localStorage.getItem("playlists") === null)
     localStorage.setItem("playlists", JSON.stringify([]));
-if(localStorage.getItem("settings") == null)
+if(localStorage.getItem("settings") === null)
     localStorage.setItem("settings",
         JSON.stringify({
                 port: 13163
             })
     );
 
+fixSettingsStructure();
+fixPlaylistsStructure();
+function fixSettingsStructure() {
+    let settings = JSON.parse(localStorage.getItem("settings"));
+
+    if(typeof settings !== "object")
+        settings = [];
+
+    if(typeof settings.port !== "number" || !settings.port.toString().match(/(^[1-9]{1}$|^[0-9]{2,4}$|^[0-9]{3,4}$|^[1-5]{1}[0-9]{1}[0-9]{1}[0-9]{1}[0-9]{1}$|^[1-6]{1}[0-4]{1}[0-9]{1}[0-9]{1}[0-9]{1}$|^[1-6]{1}[0-5]{1}[0-4]{1}[0-9]{1}[0-9]{1}$|^[1-6]{1}[0-5]{1}[0-5]{1}[0-3]{1}[0-5]{1}$)/))
+        settings.port = 13163;
+
+    localStorage.setItem("settings", JSON.stringify(settings));
+}
+
+function fixPlaylistsStructure() {
+    let playlists = JSON.parse(localStorage.getItem("playlists"));
+
+    if(typeof playlists !== "object")
+        playlists = [];
+
+    for(let i = playlists.length-1; i > -1; i--) {
+        if (typeof playlists[i] !== "object" || typeof playlists[i].name !== "string" || typeof playlists[i].directory !== "string")
+            playlists.splice(i, 1);
+    }
+
+
+    localStorage.setItem("playlists", JSON.stringify(playlists));
+}
+
 let mainWindow;
 let tray;
 let currentWindowSender;
 
 function createMainWindow() {
-    var haveStartupFlag = false;
+    let haveStartupFlag = false;
     process.argv.forEach(function (val, index, array) {
-        if(val == "--startup")
+        if(val === "--startup")
             haveStartupFlag = true
     });
 
@@ -40,12 +70,12 @@ function createMainWindow() {
     mainWindow.setMenu(null);
 
     tray = new Tray(`${__dirname}/icon.ico`);
-    var contextMenu = Menu.buildFromTemplate([
+    let contextMenu = Menu.buildFromTemplate([
         {
             label: "Options",
             click:  function(){
                 mainWindow.show();
-            } 
+            }
         },
         {
             label: "Quit",
@@ -105,7 +135,7 @@ function createMainWindow() {
         );
     });
     ipc.on("add-playlist", function(event, data) {
-        var playlists = JSON.parse(localStorage.getItem("playlists"));
+        let playlists = JSON.parse(localStorage.getItem("playlists"));
 
         for(let i = 0; i < playlists.length; i++) {
             if(playlists[i].name == data.name)
@@ -121,7 +151,7 @@ function createMainWindow() {
         localStorage.setItem("playlists", JSON.stringify(data));
     });
     ipc.on("change-port", function(event, data) {
-        var settings = JSON.parse(localStorage.getItem("settings"));
+        let settings = JSON.parse(localStorage.getItem("settings"));
         settings.port = data;
         localStorage.setItem("settings", JSON.stringify(settings));
 
@@ -145,7 +175,7 @@ function createMainWindow() {
 }
 
 function sendDataToWindow(channel, args) {
-    if(currentWindowSender != null)
+    if(currentWindowSender !== null)
         currentWindowSender.send(channel, args);
 }
 
@@ -165,9 +195,9 @@ app.on("activate", function () {
 const express = require("express");
 const server = express();
 server.disable("x-powered-by");
-var runningServer;
+let runningServer;
 
-var serverData = {
+let serverData = {
     isRunning: false
 };
 
@@ -190,15 +220,22 @@ function restartServer(port) {
     sendDataToWindow("serverDataResponse", serverData);
 }
 
+server.use(function(req, res, next) {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "X-Requested-With");
+    next();
+});
+
 server.get("/version", function(req, res) {
     res.json(version);
 });
 
 server.get("/playlists", function(req, res) {
-    var playlists = JSON.parse(localStorage.getItem("playlists"));
-    var output = [];
+    let playlists = JSON.parse(localStorage.getItem("playlists")),
+        output = [];
+
     for(let i = 0; i < playlists.length; i++) {
-        var filesList = fs.readdirSync(playlists[i].directory),
+        let filesList = fs.readdirSync(playlists[i].directory),
             fileCount = 0;
 
         filesList.forEach(function(file) {
@@ -207,8 +244,7 @@ server.get("/playlists", function(req, res) {
         });
 
         output.push({
-            name: playlists[i].name,
-            name_b64: Buffer.from(playlists[i].name).toString("base64"),
+            name: Buffer.from(playlists[i].name).toString("base64"),
             files: fileCount
         });
     }
@@ -216,37 +252,49 @@ server.get("/playlists", function(req, res) {
     res.json(output);
 });
 
-server.get("/getfiles", function(req, res) {
-    if(typeof req.query.q === "undefined")
+server.get("/files", function(req, res) {
+    if(typeof req.query.playlist === "undefined")
+        return res.status(400).json(new Error(400, "missingQuery", "Missing GET parameter: playlist").output());
 
-    var q = Buffer.from(req.query.q, "base64").toString();
-    if(q == "")
+    let debug = false;
+    if(typeof req.query.debug !== "undefined")
+        debug = true;
 
-    var playlists = JSON.parse(localStorage.getItem("playlists"));
-    var selectedPlaylist = false;
+    let playlist = Buffer.from(req.query.playlist, "base64").toString("utf8");
+    if(playlist.length < 2)
+        return res.status(400).json(new Error(400, "invalidQuery", "Invalid playlist input").output());
+
+    let playlists = JSON.parse(localStorage.getItem("playlists")),
+        selectedPlaylist = false;
 
     for(let i = 0; i < playlists.length; i++) {
-        if(playlists[i].name == q)
+        if(playlists[i].name === playlist)
             selectedPlaylist = playlists[i];
     }
     if(!selectedPlaylist)
+        return res.status(404).json(new Error(404, "playlistNotFound", "Playlist could not be found").output());
 
     selectedPlaylist.directory += !selectedPlaylist.directory.endsWith("\\") ? "\\" : "";
 
-    var filesList = fs.readdirSync(selectedPlaylist.directory),
+    let filesList = fs.readdirSync(selectedPlaylist.directory),
         output = [];
 
-    var i = 0;
     filesList.forEach(function(file) {
-        var parsedFile = fs.statSync(selectedPlaylist.directory + file);
-        if(!parsedFile.isDirectory() && file != ".gitignore") {
-            output.push({
-                name: file,
-                name_b64: Buffer.from(selectedPlaylist.name + "/" + file).toString("base64"),
+        let parsedFile = fs.statSync(selectedPlaylist.directory + file);
+        if(!parsedFile.isDirectory() && file.toLowerCase() !== ".gitignore") {
+            let thisOutput = {
+                name: Buffer.from(file).toString("base64"),
                 size: parsedFile.size,
                 dateCreated: parsedFile.birthtime.getTime(),
                 dateModified: parsedFile.mtime.getTime()
-            });
+            };
+
+            if(debug) {
+                thisOutput._unsafeName = file;
+                thisOutput._stat = parsedFile;
+            }
+
+            output.push(thisOutput);
         }
     });
 
@@ -254,50 +302,69 @@ server.get("/getfiles", function(req, res) {
         return a.dateCreated - b.dateCreated;
     });
 
-    res.json(output);
+    if(debug) {
+        res.setHeader("Content-Type", "application/json");
+        res.send(JSON.stringify(output, null, "    "));
+    }else
+        res.json(output);
 });
 
 server.get("/download", function(req, res) {
-    if(typeof req.query.q === "undefined")
+    if(typeof req.query.query === "undefined" || typeof req.query.playlist === "undefined")
+        return res.status(400).json(new Error(400, "missingQuery", "Missing GET parameter: " + (typeof req.query.query === "undefined" ? "query" : "") + (typeof req.query.query === "undefined" && typeof req.query.playlist === "undefined" ? ", " : "") + (typeof req.query.playlist === "undefined" ? "playlist" : "")).output());
 
-    var q = Buffer.from(req.query.q, "base64").toString().split("/");
-    if(q.length < 2)
+    let query_file = new Buffer(req.query.query, "base64").toString("utf8");
+    if(query_file.length < 2)
+        return res.status(400).json(new Error(400, "invalidQuery", "Invalid query input").output());
 
-    var playlists = JSON.parse(localStorage.getItem("playlists"));
-    var selectedPlaylist = false;
+    let query_playlist = Buffer.from(req.query.playlist, "base64").toString("utf8");
+    if(query_playlist.length < 2)
+        return res.status(400).json(new Error(400, "invalidQuery", "Invalid playlist input").output());
+
+    let playlists = JSON.parse(localStorage.getItem("playlists")),
+        selectedPlaylist = false;
 
     for(let i = 0; i < playlists.length; i++) {
-        if(playlists[i].name == q[0])
+        if(playlists[i].name === query_playlist)
             selectedPlaylist = playlists[i];
     }
     if(!selectedPlaylist)
+        return res.status(404).json(new Error(404, "playlistNotFound", "Playlist could not be found").output());
 
     selectedPlaylist.directory += !selectedPlaylist.directory.endsWith("\\") ? "\\" : "";
 
-    if(!fs.existsSync(selectedPlaylist.directory + q[1]))
+    if(!fs.existsSync(selectedPlaylist.directory + query_file))
+        return res.status(404).json(new Error(404, "fileNotFound", "File not found").output());
 
-    var file = fs.statSync(selectedPlaylist.directory + q[1]);
+    let file = fs.statSync(selectedPlaylist.directory + query_file);
     if(file.isDirectory())
+        return res.status(400).json(new Error(400, "invalidFile", "Invalid file, file is a directory").output());
 
-    res.sendFile(selectedPlaylist.directory + q[1]);
+    res.sendFile(selectedPlaylist.directory + query_file);
 });
 
 server.get("/verify", function(req, res) {
-    var q = Buffer.from(req.query.q, "base64").toString();
-    var playlists = JSON.parse(localStorage.getItem("playlists"));
-    var selectedPlaylist = false;
+    if(typeof req.query.playlist === "undefined")
+        return res.status(400).json(new Error(400, "missingQuery", "Missing GET parameter: playlist").output());
+
+    let query_playlist = new Buffer(req.query.playlist, "base64").toString("utf8");
+    if(query_playlist.length < 2)
+        return res.status(400).json(new Error(400, "invalidQuery", "Invalid playlist input").output());
+
+    let playlists = JSON.parse(localStorage.getItem("playlists"));
 
     for(let i = 0; i < playlists.length; i++) {
-        if(playlists[i].name == q)
-            selectedPlaylist = playlists[i];
+        if(playlists[i].name === query_playlist)
+            return res.json([true]);
     }
-    if(!selectedPlaylist)
-        return res.json([false]);
-    res.json([true]);
+    return res.json([false]);
 });
 
-server.get("/*", function(req, res) {
+server.get("/", function(req, res) {
     res.send("<a href=\"https://github.com/Wassup789/Music-Sync\">Music Sync by Wassup789</a>");
+});
+server.get("/*", function(req, res) {
+    res.status(404).json(new Error(404, "unknownRequest", "Request could not be found"));
 });
 
 process.on("uncaughtException", function(err) {
@@ -316,13 +383,16 @@ process.on("uncaughtException", function(err) {
     }
 });
 
-var Error = function (type, message){
+const Error = function (errorCode, type, message){
+    this.errorCode = errorCode;
     this.type = type;
     this.message = message;
 };
+Error.prototype.output = function () {
     return {
         status: "error",
         error: {
+            code: this.errorCode,
             type: this.type,
             message: this.message
         }
