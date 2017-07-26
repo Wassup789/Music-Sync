@@ -26,6 +26,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
+import com.google.gson.stream.JsonReader;
 import com.wassup789.android.musicsync.fragments.SettingsFragment;
 import com.wassup789.android.musicsync.objectClasses.MediaInformation;
 
@@ -35,12 +36,15 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.net.ConnectException;
 import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
@@ -63,6 +67,11 @@ public class BackgroundService extends Service {
     public static final int notificationIDOutdated = notificationID + 3;
     public static int totalFilesDownloaded = 0;
     public static ArrayList<String> filesDownloaded = new ArrayList<String>();
+    
+    public static final int STATUS_UPDATE = 100;
+    public static final int STATUS_DOWNLOADINFO = 101;
+    public static final int STATUS_CURRENTDOWNLOADINFO = 102;
+    public static final int STATUS_CURRENTPLAYLIST = 103;
 
     ResultReceiver resultReceiver;
     private SharedPreferences settings;
@@ -93,7 +102,7 @@ public class BackgroundService extends Service {
         if (!fileMediaDirectory.exists())
             fileMediaDirectory.mkdirs();
 
-        sendMessage(100, "Sleeping");
+        sendMessage(STATUS_UPDATE, "Sleeping");
 
         Boolean toStart = settings.getBoolean("refreshToggle", SettingsFragment.default_refreshToggle);
         Integer timeMinutes = settings.getInt("refreshInterval", SettingsFragment.default_refreshInterval);
@@ -104,7 +113,7 @@ public class BackgroundService extends Service {
     }
 
     public void onDestroy() {
-        sendMessage(100, "Killed");
+        sendMessage(STATUS_UPDATE, "Killed");
         Log.i("BackgroundService", "Service killed");
     }
 
@@ -117,7 +126,7 @@ public class BackgroundService extends Service {
             //removeOldPlaylists();
             NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
             if(!checkVersion(BackgroundService.this)) {
-                NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(BackgroundService.this)
+                /*NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(BackgroundService.this)
                         .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.drawable.ic_update_white_48dp))
                         .setSmallIcon(R.drawable.ic_headset_white_48dp)
                         .setColor(Color.parseColor("#F57C00"))
@@ -126,7 +135,7 @@ public class BackgroundService extends Service {
                         .setContentIntent(PendingIntent.getActivity(BackgroundService.this, 0, new Intent(BackgroundService.this, MainActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP), 0))
                         .setAutoCancel(true);
 
-                notificationManager.notify(notificationIDOutdated, mBuilder.build());
+                notificationManager.notify(notificationIDOutdated, mBuilder.build());*/
                 return;
             }else
                 notificationManager.cancel(notificationIDOutdated);
@@ -139,7 +148,7 @@ public class BackgroundService extends Service {
                     else
                         update(playlists[i]);
                 }
-                sendMessage(100, "Sleeping");
+                sendMessage(STATUS_UPDATE, "Sleeping");
                 isRunning = false;
             } catch (JsonParseException e) {
                 e.printStackTrace();
@@ -209,10 +218,11 @@ public class BackgroundService extends Service {
             isRunning = true;
         else
             return;
-        sendMessage(100, "Gathering Information");
-        sendMessage(103, playlistName);
+        sendMessage(STATUS_UPDATE, "Gathering Information");
+        sendMessage(STATUS_CURRENTPLAYLIST, playlistName);
         try {
-            URL verifyUrl = new URL(serverUrl + "verify?q=" + Base64.encodeToString(playlistName.getBytes(), Base64.DEFAULT));
+            String b64_playlistName = Base64.encodeToString(playlistName.getBytes(), Base64.URL_SAFE);
+            URL verifyUrl = new URL(serverUrl + "verify?playlist=" + b64_playlistName);
             URLConnection urlConnection = verifyUrl.openConnection();
             urlConnection.setConnectTimeout(5000);
             urlConnection.connect();
@@ -230,7 +240,7 @@ public class BackgroundService extends Service {
                 return;
             }
 
-            URL getFilesUrl = new URL(serverUrl + "getfiles?q=" + Base64.encodeToString(playlistName.getBytes(), Base64.DEFAULT));
+            URL getFilesUrl = new URL(serverUrl + "files?playlist=" + b64_playlistName);
             urlConnection = getFilesUrl.openConnection();
             urlConnection.setConnectTimeout(5000);
             urlConnection.connect();
@@ -241,28 +251,56 @@ public class BackgroundService extends Service {
             while ((inputLine2 = in.readLine()) != null)
                 data = inputLine2;
 
-            ArrayList<MediaInformation> output = gson.fromJson(data, new TypeToken<ArrayList<MediaInformation>>() {
-            }.getType());
+            ArrayList<MediaInformation> dataFiles = gson.fromJson(data, new TypeToken<ArrayList<MediaInformation>>() {}.getType());
 
             //Go through every file and remove duplicates and non-existing files
             File f = new File(mediaDirectory + playlistName + "/");
             if(!f.exists())
                 f.mkdirs();
-            File file[] = f.listFiles();
+            File directoryFiles[] = f.listFiles();
             ArrayList<File> filesRemove = new ArrayList<>(Arrays.asList(f.listFiles()));
 
-            for (int i = 0; i < file.length; i++) {
-                for (int ii = 0; ii < output.size(); ii++) {
-                    //Removes files that exist
-                    if (file[i].getName().equals(output.get(ii).name))
-                        filesRemove.remove(file[i]);
-                    //Remove files that are the exact size and name
-                    if (file[i].getName().equals(output.get(ii).name) && file[i].length() == output.get(ii).size)
-                        output.remove(ii);
+            //Load info file
+            File infoFile = new File(mediaDirectory + playlistName + ".json");
+            ArrayList<MediaInformation> infoStorageList = null;
+            if(infoFile.exists()) {
+                try {
+                    JsonReader reader = new JsonReader(new FileReader(infoFile));
+                    infoStorageList = gson.fromJson(reader, new TypeToken<ArrayList<MediaInformation>>() {}.getType());
+                }catch(Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            // Write data to info file
+            try (Writer writer = new FileWriter(infoFile)) {
+                gson.toJson(dataFiles, writer);
+            }
+
+            for (int i = 0; i < directoryFiles.length; i++) {
+                for (int j = 0; j < dataFiles.size(); j++) {
+                    String decodedFilename = new String(Base64.decode(dataFiles.get(j).name, Base64.DEFAULT));
+
+                    boolean isDateModifiedDifferent = false;
+                    if(infoStorageList != null) {
+                        for(int k = 0; k < infoStorageList.size(); k++) {
+                            if(dataFiles.get(j).name.equals(infoStorageList.get(k).name) && dataFiles.get(j).dateModified != infoStorageList.get(k).dateModified) {
+                                isDateModifiedDifferent = true;
+                            }
+                        }
+                    }
+
+                    //Removes files from file removal array that exist
+                    if (directoryFiles[i].getName().equals(decodedFilename)) {
+                        filesRemove.remove(directoryFiles[i]);
+
+                        //Remove files only if files are exact same size and has not been modified
+                        if(directoryFiles[i].length() == dataFiles.get(j).size && !isDateModifiedDifferent)
+                            dataFiles.remove(j);
+                    }
                 }
             }
 
-            sendMessage(100, "Removing Files");
+            sendMessage(STATUS_UPDATE, "Removing Files");
             //Remove files not in the original folder
             for (int i = 0; i < filesRemove.size(); i++) {
                 Log.i("BackgroundService", String.format("Deleting file: \"%s\"", filesRemove.get(i).getName()));
@@ -270,7 +308,7 @@ public class BackgroundService extends Service {
             }
 
             //Check if you need to download files
-            if (output.size() == 0) {
+            if (dataFiles.size() == 0) {
                 updatePlaylist(playlistName);
                 return;
             }
@@ -285,41 +323,46 @@ public class BackgroundService extends Service {
             notificationManager.cancel(notificationIDComplete);
             notificationManager.cancel(notificationIDPermMissing);
 
-            Log.i("BackgroundService", String.format("Start download of %d file(s)", output.size()));
-            sendMessage(100, String.format("Downloading %d file(s)", output.size()));
+            Log.i("BackgroundService", String.format("Start download of %d file(s)", dataFiles.size()));
+            sendMessage(STATUS_UPDATE, String.format("Downloading %d file(s)", dataFiles.size()));
 
-            for (int i = 0; i < output.size(); i++) {
+            for (int i = 0; i < dataFiles.size(); i++) {
                 try {
-                    sendMessage(101, String.format("%d (%d%% downloaded)", (output.size() - i), (int) Math.round(((double) i / output.size()) * 100)));
-                    sendMessage(102, output.get(i).name);
+                    String decodedFilename = new String(Base64.decode(dataFiles.get(i).name, Base64.DEFAULT));
+                    String filename_urlSafe = Base64.encodeToString(decodedFilename.getBytes(), Base64.URL_SAFE);
+
+                    sendMessage(STATUS_DOWNLOADINFO, String.format("%d (%d%% downloaded)", (dataFiles.size() - i), (int) Math.round(((double) i / dataFiles.size()) * 100)));
+                    sendMessage(STATUS_CURRENTDOWNLOADINFO, decodedFilename);
+
                     if (failedDownloads > 0)
                         failedDownloadString = String.format("\n%d files failed to download", failedDownloads);
+
                     NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this)
                             .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.drawable.ic_file_download_black_48dp))
                             .setSmallIcon(R.drawable.ic_headset_white_48dp)
                             .setColor(Color.parseColor("#F57C00"))
                             .setContentTitle("Downloading Music...")
-                            .setContentText((i - failedDownloads) + "/" + (output.size() - failedDownloads) + " files downloaded")
+                            .setContentText((i - failedDownloads) + "/" + (dataFiles.size() - failedDownloads) + " files downloaded")
                             .setStyle(new NotificationCompat.BigTextStyle()
-                                .bigText(String.format("%d/%d files downloaded%s", (i - failedDownloads), (output.size() - failedDownloads), failedDownloadString))
-                                .setSummaryText((Math.round(((i - failedDownloads + 0.0) / (output.size() - failedDownloads + 0.0)) * 1000.0) / 10.0) + "% downloaded")
+                                .bigText(String.format("%d/%d files downloaded%s\n\n%s", (i - failedDownloads), (dataFiles.size() - failedDownloads), failedDownloadString, decodedFilename))
+                                .setSummaryText((Math.round(((i - failedDownloads + 0.0) / (dataFiles.size() - failedDownloads + 0.0)) * 1000.0) / 10.0) + "% downloaded")
                             )
-                            .setProgress(output.size() - failedDownloads, i - failedDownloads, false)
+                            .setProgress(dataFiles.size() - failedDownloads, i - failedDownloads, false)
                             .setOngoing(true)
                             .setContentIntent(PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK).putExtra("showDownloaded", true), 0));
-                    if(!MainActivity.isActivityActiviated)
-                        notificationManager.notify(notificationID, mBuilder.build());
 
-                    Log.i("BackgroundService", String.format("Downloading: \"%s\"", output.get(i).name));
+                    notificationManager.notify(notificationID, mBuilder.build());
 
-                    URL downloadUrl = new URL(serverUrl + "download?q=" + output.get(i).name_b64);
+                    Log.i("BackgroundService", String.format("Downloading: \"%s\"", decodedFilename));
+
+                    URL downloadUrl = new URL(serverUrl + "download?playlist=" + b64_playlistName + "&query=" + filename_urlSafe);
                     URLConnection connection = downloadUrl.openConnection();
                     connection.setConnectTimeout(5000);
                     connection.connect();
 
                     // download the file
                     InputStream inputs = new BufferedInputStream(connection.getInputStream());
-                    OutputStream outputs = new FileOutputStream(mediaDirectory + playlistName + "/" + output.get(i).name);
+                    OutputStream outputs = new FileOutputStream(mediaDirectory + playlistName + "/" + decodedFilename);
 
                     byte datas[] = new byte[1024];
                     int count;
@@ -330,16 +373,17 @@ public class BackgroundService extends Service {
                     outputs.close();
                     inputs.close();
 
-                    filesDownloaded.add(output.get(i).name);
+                    filesDownloaded.add(decodedFilename);
                 } catch (FileNotFoundException e) {
-                    Log.w("BackgroundService", String.format("File: \"%s\" failed to download", output.get(i).name));
-                    Log.w("BackgroundService", String.format("URL: %sdownload?q=%s", serverUrl, output.get(i).name_b64));
+                    String decodedFilename = new String(Base64.decode(dataFiles.get(i).name, Base64.DEFAULT));
+                    Log.w("BackgroundService", String.format("File: \"%s\" failed to download", decodedFilename));
+                    Log.w("BackgroundService", String.format("URL: %sdownload?playlist=%s&query=%s", serverUrl, b64_playlistName, Base64.encodeToString(decodedFilename.getBytes(), Base64.URL_SAFE)));
                     failedDownloads++;
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
-            sendMessage(101, "");
+            sendMessage(STATUS_DOWNLOADINFO, "");
 
             if (failedDownloads > 0)
                 failedDownloadString = String.format("\n%d files failed to download", failedDownloads);
@@ -350,19 +394,19 @@ public class BackgroundService extends Service {
                     .setSmallIcon(R.drawable.ic_headset_white_48dp)
                     .setColor(Color.parseColor("#F57C00"))
                     .setContentTitle("Download Complete")
-                    .setContentText(String.format("%d files downloaded", (totalFilesDownloaded + output.size() - failedDownloads)))
+                    .setContentText(String.format("%d files downloaded", (totalFilesDownloaded + dataFiles.size() - failedDownloads)))
                     .setStyle(new NotificationCompat.BigTextStyle()
-                                    .bigText(String.format("%d files downloaded%s", (totalFilesDownloaded + output.size() - failedDownloads), failedDownloadString))
+                                    .bigText(String.format("%d files downloaded%s", (totalFilesDownloaded + dataFiles.size() - failedDownloads), failedDownloadString))
                     )
                     .setDeleteIntent(createOnDismissedIntent(this, notificationIDComplete))
                     .setContentIntent(PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK).putExtra("showDownloaded", true), 0))
                     .setAutoCancel(true);
 
-            totalFilesDownloaded += output.size();
+            totalFilesDownloaded += dataFiles.size();
             if(!MainActivity.isActivityActiviated)
                 notificationManager.notify(notificationIDComplete, mBuilder.build());
 
-            sendMessage(100, "Updating Playlist");//This is put outside of class for static void reasons
+            sendMessage(STATUS_UPDATE, "Updating Playlist");
             updatePlaylist(playlistName);
         } catch (IOException e) {
             Log.e("BackgroundService", "An error has occurred whilst updating the media files.");

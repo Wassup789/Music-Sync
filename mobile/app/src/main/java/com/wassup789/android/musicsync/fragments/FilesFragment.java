@@ -87,21 +87,24 @@ public class FilesFragment extends Fragment {
     public void setListViewDefault() {
         isViewingPlaylist = false;
 
-
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                ListView filesList = (ListView) getActivity().findViewById(R.id.filesListView);
-                if (filesList != null)
-                    filesList.setVisibility(View.GONE);
-                TextView title = (TextView) getActivity().findViewById(R.id.title);
-                if (title != null)
-                    title.setText("Playlists:");
-                Button toggleButton = (Button) getActivity().findViewById(R.id.toggleButton);
-                if (toggleButton != null)
-                    toggleButton.setVisibility(View.GONE);
-            }
-        });
+        try {
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    ListView filesList = (ListView) getActivity().findViewById(R.id.filesListView);
+                    if (filesList != null)
+                        filesList.setVisibility(View.GONE);
+                    TextView title = (TextView) getActivity().findViewById(R.id.title);
+                    if (title != null)
+                        title.setText("Playlists:");
+                    Button toggleButton = (Button) getActivity().findViewById(R.id.toggleButton);
+                    if (toggleButton != null)
+                        toggleButton.setVisibility(View.GONE);
+                }
+            });
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
 
         SharedPreferences settings = getActivity().getSharedPreferences("settings", Context.MODE_PRIVATE);
         ArrayList<DoubleListItem> data = new ArrayList<DoubleListItem>();

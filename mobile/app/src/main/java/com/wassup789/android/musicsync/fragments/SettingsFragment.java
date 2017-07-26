@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.text.Html;
 import android.text.InputType;
+import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -281,9 +282,9 @@ public class SettingsFragment extends Fragment {
             ArrayList<PlaylistInformation> output = gson.fromJson(data, new TypeToken<ArrayList<PlaylistInformation>>() {}.getType());
             final String[] playlists = new String[output.size()];
             for(int i = 0; i < output.size(); i++) {
-                playlists[i] = output.get(i).name;
+                playlists[i] = new String(Base64.decode(output.get(i).name, Base64.DEFAULT), "UTF-8");
                 for(int ii = 0; ii < savedPlaylists.length; ii++){
-                    if(output.get(i).name.equals(savedPlaylists[ii])){
+                    if(playlists[i].equals(savedPlaylists[ii])){
                         playlistsToSelect.add(i);
                         break;
                     }

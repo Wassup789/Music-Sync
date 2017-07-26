@@ -214,7 +214,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onReceiveResult(int resultCode, final Bundle resultData) {
 
-            if(resultCode == 100){//Update status information
+            if(resultCode == BackgroundService.STATUS_UPDATE){//Update status information
                 runOnUiThread( new Thread() {
                     public void run() {
                         String status = resultData.getString("data");
@@ -260,7 +260,7 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
                 });
-            }else if(resultCode == 101){//Set download information
+            }else if(resultCode == BackgroundService.STATUS_DOWNLOADINFO){//Set download information
                 runOnUiThread( new Thread() {
                     public void run() {
                         String total = resultData.getString("data");
@@ -269,7 +269,7 @@ public class MainActivity extends AppCompatActivity {
                             filesToDownloadValue.setText(total);
                     }
                 });
-            }else if(resultCode == 102){//Set current download information
+            }else if(resultCode == BackgroundService.STATUS_CURRENTDOWNLOADINFO){//Set current download information
                 runOnUiThread( new Thread() {
                     public void run() {
                         String currentDownload = resultData.getString("data");
@@ -278,7 +278,7 @@ public class MainActivity extends AppCompatActivity {
                             currentDownloadValue.setText(currentDownload);
                     }
                 });
-            }else if(resultCode == 103){//Set current playlist
+            }else if(resultCode == BackgroundService.STATUS_CURRENTPLAYLIST){//Set current playlist
                 runOnUiThread( new Thread() {
                     public void run() {
                         String currentPlaylist = resultData.getString("data");

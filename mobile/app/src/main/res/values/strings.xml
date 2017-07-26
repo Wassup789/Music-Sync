@@ -58,7 +58,7 @@
     <string name="dialog_outdatedVersion_title">Version Outdated</string>
     <string name="dialog_outdatedVersion_desc"><![CDATA[
         The version numbers of the server and the client do not match. Please update both the server and the client to the latest version.<br><br>
-        Continuing to use the outdated application(s) may result in crashes.<br><br>
+        Continuing to use the outdated application(s) may produce unexpected results.<br><br>
         <a href=\'https://github.com/Wassup789/Music-Sync/releases\'>Download via Github.com</a>
     ]]></string>
 </resources>
