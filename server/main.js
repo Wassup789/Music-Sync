@@ -1,17 +1,24 @@
 const version = [1, 0, 2, 0];
 
+const isMac = process.platform === "darwin";
+
 const electron = require("electron");
 const app = electron.app;
 const BrowserWindow = electron.BrowserWindow;
 const path = require("path");
 const fs = require("fs");
 const LocalStorage = require("node-localstorage").LocalStorage;
-const directoryLocation = __dirname.endsWith("app.asar") ? __dirname.replace("resources\\app.asar", "") : __dirname;
-const localStorage = new LocalStorage(`${directoryLocation}/settings/`);
+const isPackaged = __dirname.endsWith("app.asar");
+const directoryLocation = isPackaged ? __dirname.replace(/resources\/app.asar/ig, "") : __dirname;
+const localStorage = new LocalStorage(isPackaged && isMac ? `${app.getPath("userData")}/settings/` : `${directoryLocation}/settings/`);
 const ipc = electron.ipcMain;
 const dialog = electron.dialog;
 const Menu = electron.Menu;
 const Tray = electron.Tray;
+
+if(isMac){
+    app.dock.setIcon(`${__dirname}/icon_1024.png`);
+}
 
 if(localStorage.getItem("playlists") === null)
     localStorage.setItem("playlists", JSON.stringify([]));
@@ -47,7 +54,6 @@ function fixPlaylistsStructure() {
             playlists.splice(i, 1);
     }
 
-
     localStorage.setItem("playlists", JSON.stringify(playlists));
 }
 
@@ -61,22 +67,52 @@ function createMainWindow() {
         if(val === "--startup")
             haveStartupFlag = true
     });
+    if(app.getLoginItemSettings().wasOpenedAsHidden) {
+        haveStartupFlag = true;
+        if(isMac)
+            app.dock.hide();
+    }
 
-    mainWindow = new BrowserWindow({width: 550, height: 600, minWidth: 410, minHeight: 490, icon: `${__dirname}/icon.ico`, show: !haveStartupFlag});
+    let iconFile = `${__dirname}/${process.platform === "win32" ? "icon.ico" : (isMac ? "icon_mac_24_Template.png" : "icon_128.png")}`;
+
+    mainWindow = new BrowserWindow({width: 550, height: 600, minWidth: 410, minHeight: 490, icon: iconFile, show: !haveStartupFlag, webPreferences: {nodeIntegration: true}});
 
     mainWindow.loadURL(`file://${__dirname}/index.html`);
 
     //mainWindow.webContents.openDevTools();
     mainWindow.setMenu(null);
 
-    tray = new Tray(`${__dirname}/icon.ico`);
+    tray = new Tray(iconFile);
     let contextMenu = Menu.buildFromTemplate([
         {
             label: "Options",
             click:  function(){
                 mainWindow.show();
+                if(isMac)
+                    app.dock.show();
             }
         },
+        {
+            label: "Run on boot",
+            visible: isMac,
+            type: "checkbox",
+            click: function(menuItem){
+                if(!app.isInApplicationsFolder()){
+                    dialog.showMessageBox({
+                        type: "error",
+                        title: "Application not in Applications folder",
+                        message: "Application not in Applications folder",
+                        detail: "Unable to set application to run on boot. Application needs to be in the applications folder to run on boot."
+                    });
+                    menuItem.checked = false;
+                }else {
+                    setMacBootSettings(!app.getLoginItemSettings().openAtLogin);
+                    menuItem.checked = app.getLoginItemSettings().openAtLogin;
+                }
+            },
+            checked: app.getLoginItemSettings().openAtLogin && app.isInApplicationsFolder()
+        },
+        {type: "separator"},
         {
             label: "Quit",
             click:  function(){
@@ -87,6 +123,8 @@ function createMainWindow() {
     ]);
     tray.on("double-click", function() {
         mainWindow.show();
+        if(isMac)
+            app.dock.show();
     });
     tray.setToolTip("Music Sync");
     tray.setContextMenu(contextMenu);
@@ -95,6 +133,8 @@ function createMainWindow() {
         if(!app.isQuiting){
             event.preventDefault();
             mainWindow.hide();
+            if(isMac)
+                app.dock.hide();
         }
         return false;
     });
@@ -175,7 +215,7 @@ function createMainWindow() {
 }
 
 function sendDataToWindow(channel, args) {
-    if(currentWindowSender !== null)
+    if(typeof currentWindowSender !== "undefined" && currentWindowSender !== null)
         currentWindowSender.send(channel, args);
 }
 
@@ -190,6 +230,13 @@ app.on("activate", function () {
     if (mainWindow === null)
         createMainWindow()
 });
+
+function setMacBootSettings(runOnLogin){
+    app.setLoginItemSettings({
+        openAtLogin: runOnLogin,
+        openAsHidden: true
+    });
+}
 
 // Start of server
 const express = require("express");
@@ -239,7 +286,7 @@ server.get("/playlists", function(req, res) {
             fileCount = 0;
 
         filesList.forEach(function(file) {
-            if(!fs.statSync(playlists[i].directory + "\\" + file).isDirectory())
+            if(!fs.statSync(playlists[i].directory + "/" + file).isDirectory() && !file.toLowerCase().startsWith("."))
                 fileCount++;
         });
 
@@ -274,14 +321,14 @@ server.get("/files", function(req, res) {
     if(!selectedPlaylist)
         return res.status(404).json(new Error(404, "playlistNotFound", "Playlist could not be found").output());
 
-    selectedPlaylist.directory += !selectedPlaylist.directory.endsWith("\\") ? "\\" : "";
+    selectedPlaylist.directory += (!selectedPlaylist.directory.endsWith("\\") && !selectedPlaylist.directory.endsWith("/")) ? "/" : "";
 
     let filesList = fs.readdirSync(selectedPlaylist.directory),
         output = [];
 
     filesList.forEach(function(file) {
         let parsedFile = fs.statSync(selectedPlaylist.directory + file);
-        if(!parsedFile.isDirectory() && file.toLowerCase() !== ".gitignore") {
+        if(!parsedFile.isDirectory() && !file.toLowerCase().startsWith(".")) {
             let thisOutput = {
                 name: Buffer.from(file).toString("base64"),
                 size: parsedFile.size,
@@ -331,16 +378,23 @@ server.get("/download", function(req, res) {
     if(!selectedPlaylist)
         return res.status(404).json(new Error(404, "playlistNotFound", "Playlist could not be found").output());
 
-    selectedPlaylist.directory += !selectedPlaylist.directory.endsWith("\\") ? "\\" : "";
+    selectedPlaylist.directory += (!selectedPlaylist.directory.endsWith("\\") && !selectedPlaylist.directory.endsWith("/")) ? "/" : "";
 
-    if(!fs.existsSync(selectedPlaylist.directory + query_file))
+    try {
+        fs.accessSync(selectedPlaylist.directory + query_file, fs.R_OK | fs.W_OK);
+
+        if(query_file.startsWith("."))
+            throw "";
+    }catch(e){
         return res.status(404).json(new Error(404, "fileNotFound", "File not found").output());
+    }
 
     let file = fs.statSync(selectedPlaylist.directory + query_file);
     if(file.isDirectory())
         return res.status(400).json(new Error(400, "invalidFile", "Invalid file, file is a directory").output());
 
-    res.sendFile(selectedPlaylist.directory + query_file);
+    res.send(fs.readFileSync(selectedPlaylist.directory + query_file));
+    //res.sendFile(selectedPlaylist.directory + query_file);
 });
 
 server.get("/verify", function(req, res) {

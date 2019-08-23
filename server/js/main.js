@@ -4,7 +4,7 @@ ipc.send("me");
 var $,
     $Poly;
 window.addEventListener("WebComponentsReady", function(){
-    var isPlaylistDataInit = false, isSettingsDataInit = false;
+    var isPlaylistDataInit = false, isSettingsDataInit = false, registeredListeners = false;
     $ = function(a){return document.querySelector(a);};
     $Poly = Polymer.dom;
 
@@ -13,8 +13,10 @@ window.addEventListener("WebComponentsReady", function(){
         $("paper-datatable").data = data;
 
         isPlaylistDataInit = true;
-        if(isPlaylistDataInit && isSettingsDataInit)
+        if(isPlaylistDataInit && isSettingsDataInit && !registeredListeners){
             registerListeners();
+            registeredListeners = true;
+        }
     });
 
     ipc.send("settingsData");
@@ -23,8 +25,10 @@ window.addEventListener("WebComponentsReady", function(){
         $("port-input input").value = data.port.toString();
 
         isSettingsDataInit = true;
-        if(isPlaylistDataInit && isSettingsDataInit)
+        if(isPlaylistDataInit && isSettingsDataInit && !registeredListeners) {
             registerListeners();
+            registeredListeners = true;
+        }
     });
 
     ipc.send("server-data");
